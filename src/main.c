@@ -1,61 +1,37 @@
 #include "s21_smart_calc.h"
 
 int main(){
-    stack* stack_number = NULL;
     stack* stack_operation = NULL;
     int error = 0;
-    char calc_string[128] = {0};
+    char input_string[MAX_CAPACITY] = {0};
+    char output_string[MAX_CAPACITY] = {0};
     char* start = NULL;
     char* continuos = NULL;
     double number = 0.0;
+    int start_to_write = 0;
 
-    fgets(calc_string, 128, stdin);
-    start = strtok(calc_string, " \n");
+    fgets(input_string, MAX_CAPACITY, stdin);
+
+    start = strtok(input_string, " \n");
     if(start) {
-        stack_number = add_stack_number(start, stack_number);
-        stack_operation = add_stack_operation(start, stack_operation);
+        add_number_output_string(start, output_string, &start_to_write);
+        stack_operation = add_stack_operation(start, output_string, stack_operation, &start_to_write);
     }
     do {
         continuos = strtok(NULL, " \n");
         if(continuos){
-            stack_number = add_stack_number(continuos, stack_number);
-            stack_operation = add_stack_operation(continuos, stack_operation);
+            add_number_output_string(continuos, output_string, &start_to_write);
+            stack_operation = add_stack_operation(continuos, output_string, stack_operation, &start_to_write);
         }
     } while (continuos);
 
 
-    while(stack_number){
-        printf("\n----\n%f\n----\n", *(double*)stack_number->data);
-        stack_number = stack_number->next_elemennt_stack--;
-    }
+    if(output_string) printf("\n here is the string \n %s \n here is the string \n ", output_string);
 
     while(stack_operation){
         printf("\n----\n%s\n----\n", (char*)stack_operation->data);
-        stack_operation = stack_operation->next_elemennt_stack--;
+        stack_operation = stack_operation->next_element_stack--;
     }
-    
-    
-    // if(start[0] > '0' && start[0] < '9'){
-    //     number = strtod(start, &continuos);
-    //     start = continuos;
-    //     stack_number = s21_push(stack_number);
-    //     s21_set_data(stack_number, &number, sizeof(number));
-    // } else {
-    //     !stack_operation ? continuos = strtok(start, " ") : (continuos = strtok(NULL, " \n"));
-    //     stack_operation = s21_push(stack_operation);
-    //     start = continuos;
-    //     if(start){
-    //     s21_set_data(stack_operation, &start, strlen(start));
-    //     }
-    // }
-    // } while (*continuos != '\n' || !start);
-
-    // if(stack_number){
-    // printf("@@@@@@@\n%f\n@@@@@@@@@@\n", *(double*)stack_number->data);
-    // printf("@@@@@@@\n%s\n@@@@@@@@@@\n", start);
-    
-    
-    // if(calc_string) printf("\n%s\n", calc_string);
     
     return 0;
 }

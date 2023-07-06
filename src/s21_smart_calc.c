@@ -1,30 +1,66 @@
 #include "s21_smart_calc.h"
 
-stack* add_stack_number(char* A, stack* stack_number){
+void add_number_output_string(char* A, char* B, int* start_to_write){
     int res = 0;
+    int length = 0;
 
     if(A) *A >= 48 && *A <= 57 ? res = 1 : res;
 
     if(res) {
-        double number = 0.0;
-        char** end = NULL;
-        number = strtod(A, end);
-        stack_number = s21_push(stack_number);
-        s21_set_data(stack_number, &number, sizeof(double));
+        length = strlen(A);
+        memcpy(&B[*start_to_write], A, length);
+        add_whitspace(start_to_write, length, B);
     }
-
-    return stack_number;
 }
 
-stack* add_stack_operation(char* A, stack* stack_operation){
+void add_whitspace(int* start_to_write, int length, char* B){
+    *start_to_write = *start_to_write + length;
+    B[*start_to_write] = ' ';
+    *start_to_write = *start_to_write + 1;
+    B[*start_to_write] = '\0';
+}
+
+stack* add_stack_operation(char* A, char* B, stack* stack_operation, int* start_to_write){
     int res = 0;
 
     if(A) *A >= 48 && *A <= 57 ? res : (res = 1);
-    
     if(res) {
         stack_operation = s21_push(stack_operation);
+        s21_set_priority(stack_operation, check_current_priority(A));
+        if(relocate_operators(stack_operation, B, start_to_write))
+            stack_operation = s21_push(stack_operation);
         s21_set_data(stack_operation, A, sizeof(A));
     }
 
     return stack_operation;
+}
+
+int check_current_priority(char* A){
+    int res = 0;
+    int length = 0;
+
+    length = strlen(A);
+    if(length == 1 && (*A == 47 || *A == 45))
+        res = 1; 
+
+    return res;
+}
+
+int relocate_operators(stack* stack_operation, char* B, int* start_to_write){
+    int res = 0;
+
+    if(stack_operation->next_element_stack){
+    if(stack_operation->priority > stack_operation->next_element_stack->priority){
+        while(stack_operation->next_element_stack){
+            stack_operation = s21_pop(stack_operation);
+            int length = 0;
+            
+            length = strlen((char*)stack_operation->data);
+            memcpy(&B[*start_to_write], stack_operation->data, length);
+            add_whitspace(start_to_write, length, B);
+        }
+        res = 1;
+    } 
+}
+ return res;
 }

@@ -3,7 +3,7 @@
 stack* s21_push(stack* next_el){
     stack* result = (stack*)malloc(sizeof(stack));
     result->data = NULL;
-    result->next_elemennt_stack = next_el;
+    result->next_element_stack = next_el;
 
     return result;
 }
@@ -13,7 +13,7 @@ stack* s21_pop(stack* next_el){
      
     if(next_el){
         if(next_el->data) free(next_el->data);
-        result = next_el->next_elemennt_stack;
+        result = next_el->next_element_stack;
         free(next_el);
     }
 
@@ -30,5 +30,9 @@ void s21_set_data(stack* next_el, void* data, unsigned int size){
     if(next_el->data) free(next_el->data);
     next_el->data = malloc(size);
     memcpy(next_el->data, data, size);
+}
+
+void s21_set_priority(stack* current_el, int priority){
+    current_el->priority = priority;
 }
 
