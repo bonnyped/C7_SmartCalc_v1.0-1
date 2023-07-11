@@ -8,13 +8,14 @@ stack* s21_push(stack* next_el){
     return result;
 }
 
-stack* s21_pop(stack* next_el){
+stack* s21_pop(stack* last_el){
     stack* result = NULL;
      
-    if(next_el){
-        if(next_el->data) free(next_el->data);
-        result = next_el->next_element_stack;
-        free(next_el);
+    if(last_el){
+        if(last_el->data) 
+            free(last_el->data);
+        result = last_el->next_element_stack;
+        free(last_el);
     }
 
     return result;

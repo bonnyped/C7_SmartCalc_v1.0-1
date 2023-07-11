@@ -22,16 +22,28 @@ void add_whitspace(int* start_to_write, int length, char* B){
 
 stack* add_stack_operation(char* A, char* B, stack* stack_operation, int* start_to_write){
     int res = 0;
+    int current_priority = 0;
+    int previous_priority = 0;
 
     if(A) *A >= 48 && *A <= 57 ? res : (res = 1);
     if(res) {
-        stack_operation = s21_push(stack_operation);
-        s21_set_priority(stack_operation, check_current_priority(A));
-        if(relocate_operators(stack_operation, B, start_to_write))
+        current_priority = check_current_priority(A);
+        if(stack_operation){
+        previous_priority = stack_operation->priority;
+            if(current_priority > previous_priority){
+                stack_operation = relocate_operators(stack_operation, B, start_to_write);
+                stack_operation = s21_push(stack_operation);
+                s21_set_data(stack_operation, A, sizeof(A));
+            } else {
+                stack_operation = s21_push(stack_operation);
+                s21_set_data(stack_operation, A, sizeof(A));
+            }
+        } else {
             stack_operation = s21_push(stack_operation);
-        s21_set_data(stack_operation, A, sizeof(A));
+            s21_set_priority(stack_operation, current_priority);
+            s21_set_data(stack_operation, A, sizeof(A));
+        }
     }
-
     return stack_operation;
 }
 
@@ -46,21 +58,15 @@ int check_current_priority(char* A){
     return res;
 }
 
-int relocate_operators(stack* stack_operation, char* B, int* start_to_write){
-    int res = 0;
-
-    if(stack_operation->next_element_stack){
-    if(stack_operation->priority > stack_operation->next_element_stack->priority){
-        while(stack_operation->next_element_stack){
-            stack_operation = s21_pop(stack_operation);
+stack* relocate_operators(stack* stack_operation, char* B, int* start_to_write){
+        while(stack_operation){
             int length = 0;
             
             length = strlen((char*)stack_operation->data);
             memcpy(&B[*start_to_write], stack_operation->data, length);
             add_whitspace(start_to_write, length, B);
+            stack_operation = s21_pop(stack_operation);
         }
-        res = 1;
-    } 
-}
- return res;
+
+        return stack_operation;
 }
