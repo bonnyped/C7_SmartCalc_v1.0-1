@@ -1,5 +1,5 @@
 all: clang
-	gcc -g main.c stack.c s21_smart_calc.c 
+	gcc -g *.c
 
 clang:
 	clang-format -n *.c *.h
