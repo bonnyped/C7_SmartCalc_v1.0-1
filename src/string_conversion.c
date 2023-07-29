@@ -1,48 +1,47 @@
 #include "s21_smart_calc.h"
 
-int string_conversion(char *input_string) {
+char *string_conversion(char *input_string) {
+  int max_capacity_calloc = MAX_CAPACITY;
+  int start_to_write = FALSE;
   int error = FALSE;
+  int number_of_operands = FALSE;
   stack *stack_operation = NULL;
-  char *input_string_with_checks_and_whitespaces = NULL;
   char *start = NULL;
-  char *continuos = NULL;
-  char output_string[MAX_CAPACITY] = {0};
-  double number = 0.0;
-  int start_to_write = 0;
+  char *string_with_spaces = NULL;
+  char *reverse_polish_entry = NULL;
 
-  input_string_with_checks_and_whitespaces =
-      check_spaces_input_string(input_string, &error);
+  string_with_spaces = calloc(max_capacity_calloc, sizeof(char));
 
-  start = strtok(input_string_with_checks_and_whitespaces, " \n");
-  if (start) {
-    add_number_output_string(start, output_string, &start_to_write);
-    stack_operation = add_stack_operation(start, output_string, stack_operation,
-                                          &start_to_write);
-  }
-  do {
-    continuos = strtok(NULL, " \n");
-    if (continuos) {
-      add_number_output_string(continuos, output_string, &start_to_write);
-      stack_operation = add_stack_operation(continuos, output_string,
-                                            stack_operation, &start_to_write);
-    } else {
-      if (stack_operation) {
-        do {
-          stack_operation = relocate_operators(stack_operation, output_string,
-                                               &start_to_write);
-        } while (stack_operation);
+  error = check_spaces_input_string(input_string, &max_capacity_calloc,
+                                    string_with_spaces);
+  if (string_with_spaces && !error) {
+
+    printf("\ntransformed string\n%s\ntransformed string\n",
+           string_with_spaces);
+
+    reverse_polish_entry = malloc(max_capacity_calloc * (sizeof(char)));
+
+    do {
+      !start ? start = strtok(string_with_spaces, " ")
+             : (start = strtok(NULL, " "));
+      if (start) {
+        stack_operation = add_number_output_string(
+            start, reverse_polish_entry, &start_to_write, &number_of_operands,
+            stack_operation);
+        stack_operation =
+            upload_offload_stack(start, reverse_polish_entry, stack_operation,
+                                 &start_to_write, &error, &number_of_operands);
+      } else {
+        while (stack_operation && stack_operation->previous_priority < MAX) {
+          stack_operation = relocate_operators(
+              reverse_polish_entry, &start_to_write, stack_operation);
+        }
       }
-    }
-  } while (continuos);
-
-  if (output_string)
-    printf("\n here is the string \n %s \n here is the string \n ",
-           output_string);
-
-  while (stack_operation) {
-    printf("\n----\n%s\n----\n", (char *)stack_operation->data);
-    stack_operation = stack_operation->next_element_stack--;
+    } while (start);
   }
+  string_with_spaces ? free(string_with_spaces) : string_with_spaces;
 
-  return error;
+  printf("\nERROR\n%d\nERROR\n", error);
+
+  return reverse_polish_entry;
 }

@@ -35,5 +35,12 @@ void s21_set_data(stack *next_el, void *data, unsigned int size) {
 }
 
 void s21_set_priority(stack *current_el, int priority) {
-  current_el->priority = priority;
+  current_el->previous_priority = priority;
+}
+
+void s21_set_associativity(stack *current_el, char *operation) {
+  *operation == DEGREE ? current_el->associativity = TRUE
+                       : (current_el->associativity);
+  *operation == '~' ? current_el->associativity = -1
+                    : (current_el->associativity);
 }

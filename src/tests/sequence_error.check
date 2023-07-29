@@ -1,9 +1,9 @@
 #suite seqeunce_error
 
 #test 1
-    int error = FALSE;
-    char *input_string = ")";
-    error = string_conversion(input_string);
+    char *input_string = "--.324234\n";
+
+    or = string_conversion(input_string);
     
 #test 2
 #test 3

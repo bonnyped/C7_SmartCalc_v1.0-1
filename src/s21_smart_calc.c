@@ -7,82 +7,87 @@ const char functions_plus_x[NUMBER_OF_FUNCTIONS_PLUS_X]
                                "sqrt\0", "ln\0",   "log\0"};
 
 const int operators[NUMBER_OF_OPERATORS] = {
-    PLUS, MINUS, MULT, SUB, OPEN_BRACKET, CLOSE_BRACKET, DEGREE};
+    PLUS, MINUS, MULT, DIV, OPEN_BRACKET, CLOSE_BRACKET, DEGREE};
 
-const int
-    regular_sequence_matrix[NUMBER_OF_ENTITIES_SEQUENCE][NUMBER_OF_ENTITIES] = {
-        /* bin op_br cl_br  func  num*/
-        {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_BINARY_OPERATOR
-        {FALSE, FALSE, FALSE, TRUE, TRUE},  // BEHIND_OPEN_BRACKET
-        {TRUE, FALSE, FALSE, FALSE, FALSE}, // BEHIND_CLOSE_BRACKET
-        {FALSE, TRUE, FALSE, FALSE, FALSE}, // BEHIND_FUNCTION
-        {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_NUMBER
-        {TRUE, TRUE, TRUE, TRUE, TRUE},     // TEMLATE
-        {TRUE, TRUE, FALSE, TRUE, TRUE},    // FIRST_CHAR
-        {FALSE, FALSE, TRUE, FALSE, TRUE},  // LAST_CHAR
+const int regular_sequence_matrix[NUMBER_OF_OPERATORS][NUMBER_OF_ENTITIES] = {
+    /* bin op_br cl_br  func  num*/
+    {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_BINARY_OPERATOR +
+    {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_OPEN_BRACKET    +
+    {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_CLOSE_BRACKET   -
+    {FALSE, TRUE, FALSE, FALSE, FALSE}, // BEHIND_FUNCTION        -
+    {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_NUMBER          -
+    {TRUE, TRUE, FALSE, TRUE, TRUE},    // FIRST_CHAR             +
+    {FALSE, FALSE, TRUE, FALSE, TRUE},  // LAST_CHAR              -
 };
 
-char *check_spaces_input_string(char *A, int *error) {
-  char *B = NULL;
-  int *previous_sequence_element = NULL;
-  int max_capacity_calloc = MAX_CAPACITY;
-  int length = strlen(A);
+int check_spaces_input_string(char *A, int *max_capacity_calloc,
+                              char *transformed_string) {
   int current_entity = FIRST_CHAR;
+  int skip = FALSE;
+  int error = FALSE;
   int index_A = FALSE;
   int index_B = FALSE;
   int type_of_first_char = FALSE;
+  size_t length = FALSE;
+  int *previous_sequence_element =
+      (int *)regular_sequence_matrix[current_entity];
 
-  previous_sequence_element = (int *)regular_sequence_matrix[current_entity];
-  B = calloc(max_capacity_calloc, sizeof(char));
+  if (A)
+    length = strlen(A);
 
   do {
+    skip = FALSE;
+
     if (A[index_A] == ' ')
       A = delete_whitespaces(A, index_A);
-    if (A[index_A] == '.') {
+
+    if (isdigit(A[index_A]) || A[index_A] == '.') {
+      skip = TRUE;
       type_of_first_char = IS_NUMBER;
-      index_A = add_zero_in_double_type(
-          A, index_A, B, &index_B, &max_capacity_calloc, &current_entity,
-          previous_sequence_element, type_of_first_char);
-      previous_sequence_element =
-          (int *)regular_sequence_matrix[current_entity];
+      index_A = (A[index_A] == '.'
+                     ? add_zero_in_double_type(
+                           A, index_A, transformed_string, &index_B,
+                           max_capacity_calloc, &current_entity,
+                           previous_sequence_element, type_of_first_char)
+                     : transfer_number_leksema_to_B(
+                           A, index_A, transformed_string, &index_B,
+                           max_capacity_calloc, &current_entity,
+                           previous_sequence_element, type_of_first_char));
     }
 
-    if (isdigit(A[index_A])) {
-      type_of_first_char = IS_NUMBER;
-      index_A = transfer_number_leksema_to_B(
-          A, index_A, B, &index_B, &max_capacity_calloc, &current_entity,
-          previous_sequence_element, type_of_first_char);
-      previous_sequence_element =
-          (int *)regular_sequence_matrix[current_entity];
-    }
-
-    if (isalpha(A[index_A])) {
+    if (isalpha(A[index_A]) && !skip) {
+      skip = TRUE;
       type_of_first_char = IS_ALPHA;
       index_A = transfer_alpha_leksema_to_B(
-          &A[index_A], index_A, B, &index_B, &max_capacity_calloc,
-          &current_entity, previous_sequence_element, type_of_first_char);
-      previous_sequence_element =
-          (int *)regular_sequence_matrix[current_entity];
+          &A[index_A], index_A, transformed_string, &index_B,
+          max_capacity_calloc, &current_entity, previous_sequence_element,
+          type_of_first_char);
     }
 
-    if (is_operator(A[index_A])) {
+    if (is_operator(A[index_A]) && !skip) {
       type_of_first_char = IS_OPERATOR;
-      index_A = transfer_operator_to_B(
-          &A[index_A], index_A, B, &index_B, &max_capacity_calloc,
-          &current_entity, previous_sequence_element, type_of_first_char);
-      previous_sequence_element =
-          (int *)regular_sequence_matrix[current_entity];
+      index_A =
+          transfer_operator_to_B(&A[index_A], index_A, transformed_string,
+                                 &index_B, max_capacity_calloc, &current_entity,
+                                 previous_sequence_element, type_of_first_char);
+      ;
     }
+    previous_sequence_element = (int *)regular_sequence_matrix[current_entity];
 
   } while (A[index_A] != '\n' && index_A > 0);
-  printf("\n\n\n\n!!!!\n%s\n!!!!\n\n\n\n", B); // clean memory B
-  if (!index_A)
-    printf("\nEMTY_STRING\n");
-  if (index_A < 0) {
-    *error = index_A;
+
+  previous_sequence_element = (int *)regular_sequence_matrix[LAST_CHAR];
+  if (previous_sequence_element[current_entity] == FALSE)
+    index_A = ERROR_OF_SEQUENCE;
+
+  if (index_A <= 0) {
+    error = index_A;
+    if (transformed_string) {
+      free(transformed_string);
+    }
   }
 
-  return B;
+  return error;
 }
 
 char *delete_whitespaces(char *A, int index_A) {
@@ -164,9 +169,10 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
                                 int *previous_sequence_element,
                                 int type_of_first_char) {
   int error = NOT_MATCHED_ALPHA_LEKSEMA;
+  int result = FALSE;
   int no_matches = NUMBER_OF_FUNCTIONS_PLUS_X;
-  int element_of_vector = 0;
-  size_t length = 0;
+  int element_of_vector = FALSE;
+  size_t length = FALSE;
   char template[MAX_CAPACITY_OF_NAME_FUNCTION] = {0};
 
   for (; element_of_vector < no_matches && error; element_of_vector++) {
@@ -179,6 +185,8 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
         ? error = check_sequence(current_entity, previous_sequence_element,
                                  type_of_first_char, element_of_vector, FALSE)
         : error;
+    if (!error)
+      result = abbreviation_functions_name(element_of_vector);
   }
 
   if (!error) {
@@ -186,9 +194,9 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
       error = realloc_memory(B, capacity);
 
     if (!error) {
-      strcpy(&B[*index_B], template);
+      B[*index_B] = result;
       index_A += length;
-      add_whitspace(index_B, length, B);
+      add_whitspace(index_B, UNO, B);
     }
   }
 
@@ -202,19 +210,14 @@ int transfer_operator_to_B(const char *current_operator, int index_A, char *B,
                            int *index_B, int *capacity, int *current_entity,
                            int *previous_sequence_element,
                            int type_of_first_char) {
-  int error = NOT_MATCHED_OPERATOR;
-  int no_mathes = NUMBER_OF_OPERATORS;
-  int element_of_vector = 0;
+  int error = FALSE;
+  int element_of_vector = FALSE;
+  int max = NUMBER_OF_OPERATORS;
   char operator= * current_operator;
+  int input_index_A = index_A;
 
-  index_A = multiplicity_plus_minus_check(current_operator, index_A, &operator);
-
-  for (; element_of_vector < no_mathes && error; element_of_vector++) {
-    operator== operators[element_of_vector]
-        ? error = check_sequence(current_entity, previous_sequence_element,
-                                 type_of_first_char, FALSE, operator)
-        : error;
-  }
+  error = check_sequence(current_entity, previous_sequence_element,
+                         type_of_first_char, FALSE, operator);
 
   if (!error) {
     if (*index_B + UNO >= *capacity)
@@ -222,31 +225,14 @@ int transfer_operator_to_B(const char *current_operator, int index_A, char *B,
 
     if (!error) {
       B[*index_B] = operator;
-      if (*(current_operator + index_A) == operator)
-        index_A += UNO;
+      index_A++;
       add_whitspace(index_B, UNO, B);
+      if (input_index_A == FALSE && operator== MINUS)
+        *current_entity = FIRST_CHAR;
     }
   } else
     index_A = error;
 
-  return index_A;
-}
-
-int multiplicity_plus_minus_check(const char *current_operator, int index_A,
-                                  char *operator) {
-  char *pointer_of_current_operator = (char *)current_operator;
-
-  while (*pointer_of_current_operator == PLUS) {
-    pointer_of_current_operator++;
-    index_A++;
-  }
-  while (*pointer_of_current_operator == MINUS) {
-    if (pointer_of_current_operator != current_operator)
-      *operator== PLUS ? *operator= MINUS : (*operator= PLUS);
-
-    pointer_of_current_operator++;
-    index_A++;
-  }
   return index_A;
 }
 
@@ -263,25 +249,77 @@ int realloc_memory(char *ptr_for_realloc, int *capacity) {
 
 int is_operator(char a) {
   int result = 0;
-  if (a == PLUS || a == MINUS || a == MULT || a == SUB || a == OPEN_BRACKET ||
-      a == CLOSE_BRACKET || a == DEGREE)
+  if (a == PLUS || a == MINUS || a == MULT || a == DIV || a == OPEN_BRACKET ||
+      a == CLOSE_BRACKET || a == DEGREE || a == 'm' || a == 'M')
     result = 1;
 
   return result;
 }
 
-void add_number_output_string(char *A, char *B, int *start_to_write) {
-  int res = 0;
-  int length = 0;
+int abbreviation_functions_name(int number_of_vectors_element) {
+  int result = FALSE;
+
+  switch (number_of_vectors_element) {
+  case 0:
+    result = X_N;
+    break;
+  case 1:
+    result = MOD_F;
+    break;
+  case 2:
+    result = COS_F;
+    break;
+  case 3:
+    result = SIN_F;
+    break;
+  case 4:
+    result = TAN_F;
+    break;
+  case 5:
+    result = ACOS_F;
+    break;
+  case 6:
+    result = ASIN_F;
+    break;
+  case 7:
+    result = ATAN_F;
+    break;
+  case 8:
+    result = SQRT_F;
+    break;
+  case 9:
+    result = LN_F;
+    break;
+  case 10:
+    result = LOG_F;
+    break;
+  default:
+    break;
+  }
+
+  return result;
+}
+
+stack *add_number_output_string(char *A, char *B, int *start_to_write,
+                                int *number_of_operands,
+                                stack *stack_operation) {
+  int result = FALSE;
+  size_t length = FALSE;
 
   if (A)
-    *A >= 48 && *A <= 57 ? res = 1 : res;
+    (*A >= 48 && *A <= 57) || *A == 'x' ? result = TRUE : result;
 
-  if (res) {
+  if (result) {
     length = strlen(A);
     memcpy(&B[*start_to_write], A, length);
     add_whitspace(start_to_write, length, B);
+    *number_of_operands += UNO;
+    while (stack_operation && stack_operation->associativity == -1) {
+      stack_operation =
+          relocate_unary_binary_operators(stack_operation, B, start_to_write);
+    }
   }
+  return stack_operation;
 }
 
 void add_whitspace(int *start_to_write, int length, char *B) {
@@ -290,57 +328,195 @@ void add_whitspace(int *start_to_write, int length, char *B) {
   *start_to_write = *start_to_write + 1;
 }
 
-stack *add_stack_operation(char *A, char *B, stack *stack_operation,
-                           int *start_to_write) {
-  int res = 0;
-  int current_priority = 0;
-  int previous_priority = 0;
+stack *upload_offload_stack(char *A, char *B, stack *stack_operation,
+                            int *start_to_write, int *error,
+                            int *number_of_operands) {
+  int result = FALSE;
+  int current_priority = FALSE;
+  int associativity = FALSE;
 
   if (A)
-    *A >= 48 && *A <= 57 ? res : (res = 1);
-  if (res) {
-    current_priority = check_current_priority(A);
+    (*A >= 48 && *A <= 57) || *A == 'x' ? result : (result = TRUE);
+
+  if (result) {
+    if ((current_priority = check_current_priority(A)) == DEGREE)
+      associativity = TRUE;
+    if (is_operator(*A))
+      stack_operation = upload_offload_stack_operation(
+          A, B, stack_operation, start_to_write, current_priority,
+          associativity, error, number_of_operands);
+    else {
+      stack_operation = upload_function(A, stack_operation);
+    }
+  }
+
+  return stack_operation;
+}
+
+int check_current_priority(char *A) {
+  int priority = 0;
+
+  if ((*A == PLUS || *A == MINUS) || (isalpha(*A) && *A != 'x'))
+    priority = LOW;
+  if (*A == MULT || *A == DIV)
+    priority = MID;
+  if (*A == DEGREE)
+    priority = DEGREE;
+
+  return priority;
+}
+
+stack *upload_offload_stack_operation(char *A, char *B, stack *stack_operation,
+                                      int *start_to_write, int current_priority,
+                                      int associativity, int *error,
+                                      int *number_of_operands) {
+  int skip = FALSE;
+
+  stack_operation =
+      check_unary_operators(A, stack_operation, number_of_operands, &skip);
+  stack_operation = check_brackets(A, stack_operation, number_of_operands,
+                                   &skip, B, start_to_write, error);
+  if (!skip) {
     if (stack_operation) {
-      previous_priority = stack_operation->priority;
-      if (current_priority > previous_priority) {
+      stack_operation = rightassociativity_equal_operation(
+          stack_operation, current_priority, A, &skip, associativity);
+      stack_operation =
+          prefix_function_on_top(stack_operation, skip, B, start_to_write);
+      stack_operation = priority_low_or_equal(stack_operation, skip, B,
+                                              start_to_write, current_priority);
+      stack_operation = leftassociativity_equal_operation(
+          stack_operation, skip, B, start_to_write, current_priority);
+      if (!skip)
         stack_operation =
-            relocate_operators(stack_operation, B, start_to_write);
-        stack_operation = s21_push(stack_operation);
-        s21_set_data(stack_operation, A, sizeof(A));
-      } else {
-        stack_operation = s21_push(stack_operation);
-        s21_set_data(stack_operation, A, sizeof(A));
-      }
+            push_and_set_operation(stack_operation, current_priority, A);
     } else {
-      stack_operation = s21_push(stack_operation);
-      s21_set_priority(stack_operation, current_priority);
-      s21_set_data(stack_operation, A, sizeof(A));
+      if (!skip)
+        stack_operation =
+            push_and_set_operation(stack_operation, current_priority, A);
+    }
+    *number_of_operands = FALSE;
+  }
+
+  return stack_operation;
+}
+
+stack *check_unary_operators(char *A, stack *stack_operation,
+                             int *number_of_operands, int *skip) {
+  if ((*A == PLUS || *A == MINUS) && *number_of_operands == FALSE) {
+    if (*A == PLUS)
+      *skip = TRUE;
+    else {
+      char its_unary = UNARY_MINUS;
+      stack_operation =
+          push_and_set_operation(stack_operation, FALSE, &its_unary);
+      *skip = TRUE;
     }
   }
   return stack_operation;
 }
 
-int check_current_priority(char *A) {
-  int res = 0;
-  int length = 0;
+stack *check_brackets(char *A, stack *stack_operation, int *number_of_operands,
+                      int *skip, char *B, int *start_to_write, int *error) {
+  if (!(*skip) && *A == OPEN_BRACKET) {
+    stack_operation = push_and_set_operation(stack_operation, MAX, A);
+    *number_of_operands = FALSE;
+    *skip += TRUE;
+  } else if (!(*skip) && *A == CLOSE_BRACKET) {
+    while (stack_operation && *(char *)stack_operation->data != OPEN_BRACKET) {
+      stack_operation = relocate_operators(B, start_to_write, stack_operation);
+    }
+    if (stack_operation && *(char *)stack_operation->data == OPEN_BRACKET) {
+      stack_operation = s21_pop(stack_operation);
 
-  length = strlen(A);
-  if (length == 1 && (*A == 47 || *A == 45))
-    res = 1;
+      while (stack_operation && *(char *)stack_operation->data == UNARY_MINUS) {
+        stack_operation =
+            relocate_operators(B, start_to_write, stack_operation);
+      }
+    } else
+      *error = NO_OPEN_BRACKET;
 
-  return res;
+    *skip += TRUE;
+  }
+
+  return stack_operation;
 }
 
-stack *relocate_operators(stack *stack_operation, char *B,
-                          int *start_to_write) {
-  while (stack_operation) {
-    int length = 0;
-
-    length = strlen((char *)stack_operation->data);
-    memcpy(&B[*start_to_write], stack_operation->data, length);
-    add_whitspace(start_to_write, length, B);
-    stack_operation = s21_pop(stack_operation);
+stack *rightassociativity_equal_operation(stack *stack_operation,
+                                          int current_priority, char *A,
+                                          int *skip, int associativity) {
+  if (!(*skip) && stack_operation->associativity == associativity &&
+      current_priority == DEGREE) {
+    *skip = TRUE;
+    stack_operation =
+        push_and_set_operation(stack_operation, current_priority, A);
   }
+
+  return stack_operation;
+}
+stack *prefix_function_on_top(stack *stack_operation, int skip, char *B,
+                              int *start_to_write) {
+  while (!skip && stack_operation && isalpha(*stack_operation->data)) {
+    stack_operation =
+        relocate_unary_binary_operators(stack_operation, B, start_to_write);
+  }
+  return stack_operation;
+}
+
+stack *priority_low_or_equal(stack *stack_operation, int skip, char *B,
+                             int *start_to_write, int current_priority) {
+  while (!skip && stack_operation && is_operator(*stack_operation->data) &&
+         stack_operation->previous_priority >= current_priority &&
+         stack_operation->previous_priority != MAX) {
+    stack_operation =
+        relocate_unary_binary_operators(stack_operation, B, start_to_write);
+  }
+  return stack_operation;
+}
+
+stack *leftassociativity_equal_operation(stack *stack_operation, int skip,
+                                         char *B, int *start_to_write,
+                                         int current_priority) {
+  while (!skip && stack_operation && stack_operation->associativity == FALSE &&
+         stack_operation->previous_priority == current_priority) {
+    stack_operation =
+        relocate_unary_binary_operators(stack_operation, B, start_to_write);
+  }
+  return stack_operation;
+}
+
+stack *relocate_unary_binary_operators(stack *stack_operation, char *B,
+                                       int *start_to_write) {
+  memcpy(&B[*start_to_write], stack_operation->data, UNO);
+  add_whitspace(start_to_write, UNO, B);
+  stack_operation = s21_pop(stack_operation);
+
+  return stack_operation;
+}
+
+stack *push_and_set_operation(stack *stack_operation, int current_priority,
+                              char *A) {
+  stack_operation = s21_push(stack_operation);
+  s21_set_priority(stack_operation, current_priority);
+  s21_set_associativity(stack_operation, A);
+  s21_set_data(stack_operation, A, sizeof(A));
+
+  return stack_operation;
+}
+
+stack *upload_function(char *A, stack *stack_operation) {
+  stack_operation = s21_push(stack_operation);
+  s21_set_priority(stack_operation, FALSE);
+  s21_set_associativity(stack_operation, A);
+  s21_set_data(stack_operation, A, sizeof(A));
+
+  return stack_operation;
+}
+
+stack *relocate_operators(char *B, int *start_to_write,
+                          stack *stack_operation) {
+  memcpy(&B[*start_to_write], stack_operation->data, UNO);
+  add_whitspace(start_to_write, UNO, B);
+  stack_operation = s21_pop(stack_operation);
 
   return stack_operation;
 }
