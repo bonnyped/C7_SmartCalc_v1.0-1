@@ -3,6 +3,9 @@
 stack *s21_push(stack *next_el) {
   stack *result = (stack *)malloc(sizeof(stack));
   result->data = NULL;
+  result->previous_priority = FALSE;
+  result->operand = FALSE;
+  result->associativity = FALSE;
   result->next_element_stack = next_el;
 
   return result;

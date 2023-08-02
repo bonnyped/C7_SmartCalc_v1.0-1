@@ -2,9 +2,11 @@
 #define S21_SMART_CALC_H
 
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_CAPACITY 4096
 #define NUMBER_OF_FUNCTIONS_PLUS_X 11
@@ -12,18 +14,32 @@
 #define NUMBER_OF_OPERATORS 7
 #define NUMBER_OF_ENTITIES 5
 #define UNO 1
+#define MONTHS_IN_YEAR 12
 
 typedef struct stack {
   char *data;
+  double operand;
   int previous_priority;
   int associativity;
   struct stack *next_element_stack;
 } stack;
 
+typedef struct credit_struct {
+  double loan_body;
+  double term;
+  double interest_rate;
+  int type_of_pay;
+  double monthly_payment_max;
+  double monthly_payment_min;
+  double loan_overpayment;
+  double total_payment;
+} credit_struct;
+
 enum types_of_first_chars {
   IS_NUMBER = 1,
   IS_ALPHA,
   IS_OPERATOR,
+  IS_FUNCTION,
 };
 
 enum input_errors {
@@ -88,6 +104,37 @@ enum priority {
   LOW,
   MID,
   MAX = 3,
+};
+
+enum type_of_pay {
+  DIFFERENTIAL = 1,
+  ANNUITETTE,
+};
+
+enum months_or_years {
+  MONTHS,
+  YEARS,
+};
+
+enum months {
+  START_OF_YEAR,
+  JANUARY = 0,
+  FEBRUARY = 31,
+  MARCH = 59,
+  APRIL = 90,
+  MAY = 120,
+  JUNE = 151,
+  JULY = 181,
+  AUGUST = 212,
+  SEPTEMBER = 243,
+  OCTOBER = 273,
+  NOVEMBER = 304,
+  DECEMBER = 334,
+};
+
+enum type_of_year {
+  NOT_LEAP_YEAR = 365,
+  LEAP_YEAR,
 };
 
 /* stack_functions */
@@ -167,5 +214,33 @@ int check_points_in_number(const char *B);
 int multiplicity_plus_minus_check(const char *current_operator, int index_A,
                                   char *operator);
 /* check_functions */
+
+/* calc_functions */
+double calc_polish_revers_entry(char *pre);
+int check_entity(char *start);
+stack *calc_or_stack(int entity, stack *stacked_numbers, char *leksema);
+stack *add_number_stack(stack *stacked_numbers, char *leksema);
+void *calc_function(stack *stacked_numbers, char *leksema);
+stack *calc_operands_wtih_operators(stack *stacked_numbers, char *leksema);
+/* calc_functions */
+
+/* credit_struct_functions */
+credit_struct *s21_credit_calc(double loan_body, double term,
+                               double interest_rate, int type_of_pay,
+                               int not_months);
+void calc_whole_payments_annuitette(credit_struct *current_calculation,
+                                    double loan_body, double term,
+                                    double interest_rate);
+void calc_annuity_rate(credit_struct *current_calculation, double loan_body,
+                       double term, double interest_rate);
+double floor_pyament(double value_to_floor);
+void calc_whole_payments_differential(credit_struct *current_calculation,
+                                      double loan_body, double term,
+                                      double interest_rate);
+int calculate_days_in_period(int day, int *month, int *year);
+int calculate_days_from_start_era_to_current_day(int day, int *month,
+                                                 int *year);
+int is_leap_year(int number_of_year);
+/* credit_struct_functions */
 
 #endif // S21_SMART_CALC_H

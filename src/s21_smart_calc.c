@@ -212,7 +212,6 @@ int transfer_operator_to_B(const char *current_operator, int index_A, char *B,
                            int type_of_first_char) {
   int error = FALSE;
   int element_of_vector = FALSE;
-  int max = NUMBER_OF_OPERATORS;
   char operator= * current_operator;
   int input_index_A = index_A;
 

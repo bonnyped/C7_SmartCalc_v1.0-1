@@ -1,5 +1,5 @@
 all: clang
-	gcc -g *.c
+	gcc -g *.c -lm
 
 clang:
 	clang-format -n *.c *.h
