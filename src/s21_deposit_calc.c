@@ -42,9 +42,9 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
                          &deposit_amount, &payout_frequency);
       break;
     case PER_MONTH:
-      per_month_calculate(start_date, &term, &deposit_amount,
-                          &current_year_type, interest_rate,
-                          &extra_day_from_leap_year);
+      //   per_month_calculate(start_date, &term, &deposit_amount,
+      //                       &current_year_type, interest_rate,
+      //                       &extra_day_from_leap_year);
       break;
     case PER_QUOTER:
       //   per_quoter_calculate();
@@ -115,83 +115,132 @@ void per_month_calculate(datum *start_date, double *term,
   int end_period_for_payment = FALSE;
 
   start_period_for_payment = calculate_days_from_christmas_to_date(start_date);
-  plus_month_period(start_date, current_year_type, interest_rate,
-                    extra_day_from_leap_year);
+  //   plus_month_period(start_date, current_year_type, interest_rate,
+  //                     extra_day_from_leap_year);
 }
 
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year) {
-  if (start_date->date == C_FEBRUARY &&
-      month_capacity[start_date->month] == C_FEBRUARY &&
-      *current_year_type == NOT_LEAP_YEAR) {
+  int check_result = conditions_check_day(start_date, current_year_type,
+                                          extra_day_from_leap_year);
+
+  switch (check_result) {
+  case NOT_LEAP_FEBRUARY:
     start_date->date = 1;
     start_date->month++;
-  } else if (start_date->date == C_FEBRUARY_LEAP &&
-             month_capacity[start_date->month] == C_FEBRUARY &&
-             *current_year_type == LEAP_YEAR) {
+    break;
+  case LEAP_FEBRUARY:
     start_date->date = 1;
     start_date->month++;
     *extra_day_from_leap_year += UNO;
-  } else if (start_date->date == C_APRIL &&
-             (month_capacity[start_date->month] == C_APRIL)) {
+    break;
+  case THIRTY_DAY_MONTH:
     start_date->date = 1;
     start_date->month++;
-  } else if (start_date->date == C_DECEMBER &&
-             start_date->month == MONTHS_IN_YEAR) {
+    break;
+  case END_OF_DECEMBER:
     start_date->date += PER_DAY - C_DECEMBER;
-    start_date->month = MONTHS_IN_YEAR - 1;
+    start_date->month = MONTHS_IN_YEAR - 11;
     start_date->year++;
     is_leap_year(start_date->year) ? *current_year_type = LEAP_YEAR
                                    : (*current_year_type = NOT_LEAP_YEAR);
-  } else if (start_date->date == C_JANUARY &&
-             (month_capacity[start_date->month] == C_JANUARY)) {
+    break;
+  case THIRTY_ONE_DAY_MONTH:
     start_date->date = 1;
     start_date->month = 1;
-  } else {
+    break;
+  default:
     start_date->date++;
+    break;
   }
+}
+
+int conditions_check_day(datum *start_date, int *current_year_type,
+                         int *extra_day_from_leap_year) {
+  int result = FALSE;
+  if (start_date->date == C_FEBRUARY &&
+      month_capacity[start_date->month] == C_FEBRUARY &&
+      *current_year_type == NOT_LEAP_YEAR)
+    result = NOT_LEAP_FEBRUARY;
+  else if (start_date->date == C_FEBRUARY_LEAP &&
+           month_capacity[start_date->month] == C_FEBRUARY &&
+           *current_year_type == LEAP_YEAR)
+    result = LEAP_FEBRUARY;
+  else if (start_date->date == C_APRIL &&
+           (month_capacity[start_date->month] == C_APRIL))
+    result = THIRTY_DAY_MONTH;
+  else if (start_date->date == C_DECEMBER &&
+           start_date->month == MONTHS_IN_YEAR)
+    result = END_OF_DECEMBER;
+  else if (start_date->date == C_JANUARY &&
+           (month_capacity[start_date->month] == C_JANUARY))
+    result = THIRTY_ONE_DAY_MONTH;
+
+  return result;
 }
 
 double plus_week_period(datum *start_date, int *current_year_type,
                         double interest_rate, int *extra_day_from_leap_year) {
   double result = FALSE;
-  if (start_date->date + PER_WEEK > C_FEBRUARY &&
-      month_capacity[start_date->month] == C_FEBRUARY &&
-      *current_year_type == NOT_LEAP_YEAR) {
+  int check_result = FALSE;
+
+  check_result = conditions_check_week(start_date, current_year_type,
+                                       extra_day_from_leap_year);
+  switch (check_result) {
+  case MORE_THAN_FABRUARY_NOT_LEAP:
     start_date->date = start_date->date + PER_WEEK - C_FEBRUARY;
     start_date->month++;
-  } else if (start_date->date + PER_WEEK > C_FEBRUARY_LEAP &&
-             month_capacity[start_date->month] == C_FEBRUARY &&
-             *current_year_type == LEAP_YEAR) {
+    break;
+  case MORE_THAN_FABRUARY_LEAP:
     start_date->date = start_date->date + PER_WEEK - C_FEBRUARY +
                        (*current_year_type - NOT_LEAP_YEAR);
     start_date->month++;
     *extra_day_from_leap_year += UNO;
-  } else if (start_date->date + PER_WEEK > C_APRIL &&
-             (month_capacity[start_date->month] == C_APRIL)) {
+    break;
+  case MORE_THEN_THRTY_DAY_MONTH:
     start_date->date = start_date->date + PER_WEEK - C_APRIL;
     start_date->month++;
-  } else if (start_date->date + PER_WEEK > C_DECEMBER &&
-             start_date->month == MONTHS_IN_YEAR) {
+    break;
+  case MORE_THAN_DECEMBER:
     start_date->date = start_date->date + PER_WEEK - C_DECEMBER;
     start_date->month = MONTHS_IN_YEAR - 11;
     start_date->year++;
     result =
         leap_and_not_leap_periods(start_date, interest_rate, current_year_type);
-  } else if (start_date->date + PER_WEEK > C_JANUARY &&
-             month_capacity[start_date->month] == C_JANUARY) {
+    break;
+  case THIRTY_ONE_DAYS_MONTH:
     start_date->date = start_date->date + PER_WEEK - C_JANUARY;
     start_date->month++;
-  } else {
+    break;
+  default:
     start_date->date = start_date->date + PER_WEEK;
+    break;
   }
 
   return result;
 }
 
-double plus_month_period(datum *start_date, int *current_year_type,
-                         double interest_rate, int *extra_day_from_leap_year) {
+double conditions_check_week(datum *start_date, int *current_year_type,
+                             int *extra_day_from_leap_year) {
   double result = FALSE;
+
+  if (start_date->date + PER_WEEK > C_FEBRUARY &&
+      month_capacity[start_date->month] == C_FEBRUARY &&
+      *current_year_type == NOT_LEAP_YEAR)
+    result = MORE_THAN_FABRUARY_NOT_LEAP;
+  else if (start_date->date + PER_WEEK > C_FEBRUARY_LEAP &&
+           month_capacity[start_date->month] == C_FEBRUARY &&
+           *current_year_type == LEAP_YEAR)
+    result = MORE_THAN_FABRUARY_LEAP;
+  else if (start_date->date + PER_WEEK > C_APRIL &&
+           (month_capacity[start_date->month] == C_APRIL))
+    result = MORE_THEN_THRTY_DAY_MONTH;
+  else if (start_date->date + PER_WEEK > C_DECEMBER &&
+           start_date->month == MONTHS_IN_YEAR)
+    result = MORE_THAN_DECEMBER;
+  else if (start_date->date + PER_WEEK > C_JANUARY &&
+           month_capacity[start_date->month] == C_JANUARY)
+    result = THIRTY_ONE_DAYS_MONTH;
 
   return result;
 }

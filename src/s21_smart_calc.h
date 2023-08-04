@@ -206,6 +206,22 @@ enum payout_frequency {
   AT_THE_END_OF_TERM,
 };
 
+enum conditions_for_adding_days {
+  NOT_LEAP_FEBRUARY = 1,
+  LEAP_FEBRUARY,
+  THIRTY_DAY_MONTH,
+  END_OF_DECEMBER,
+  THIRTY_ONE_DAY_MONTH,
+};
+
+enum conditions_for_adding_weeks {
+  MORE_THAN_FABRUARY_NOT_LEAP = 1,
+  MORE_THAN_FABRUARY_LEAP,
+  MORE_THEN_THRTY_DAY_MONTH,
+  MORE_THAN_DECEMBER,
+  THIRTY_ONE_DAYS_MONTH,
+};
+
 /* stack_functions */
 stack *s21_push(stack *next_el);
 stack *s21_pop(stack *next_el);
@@ -330,8 +346,12 @@ void per_month_calculate(datum *start_date, double *term,
                          double interest_rate, int *extra_day_from_leap_year);
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year);
+int conditions_check_day(datum *start_date, int *current_year_type,
+                         int *extra_day_from_leap_year);
 double plus_week_period(datum *start_date, int *current_year_type,
                         double interest_rate, int *extra_day_from_leap_year);
+double conditions_check_week(datum *start_date, int *current_year_type,
+                             int *extra_day_from_leap_year);
 double plus_month_period(datum *start_date, int *current_year_type,
                          double interest_rate, int *extra_day_from_leap_year);
 double leap_and_not_leap_periods(datum *start_date, double interest_rate,
