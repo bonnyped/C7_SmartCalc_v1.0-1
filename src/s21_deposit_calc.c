@@ -20,8 +20,6 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
   double day_period_interest_rate = FALSE;
   int remaining_days = TRUE;
   int extra_day_from_leap_year = FALSE;
-  int start_period_for_payment = FALSE;
-  int end_period_for_payment = FALSE;
 
   while (term >= FALSE) {
     if (!current_year_type) {
@@ -44,7 +42,9 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
                          &deposit_amount, &payout_frequency);
       break;
     case PER_MONTH:
-      //   per_month_calculate(start_date, &term, &deposit_amount);
+      per_month_calculate(start_date, &term, &deposit_amount,
+                          &current_year_type, interest_rate,
+                          &extra_day_from_leap_year);
       break;
     case PER_QUOTER:
       //   per_quoter_calculate();
@@ -106,6 +106,17 @@ void per_week_calculate(datum *start_date, int *current_year_type,
       *term = *term + *extra_day_from_leap_year;
     }
   }
+}
+
+void per_month_calculate(datum *start_date, double *term,
+                         double *deposit_amount, int *current_year_type,
+                         double interest_rate, int *extra_day_from_leap_year) {
+  int start_period_for_payment = FALSE;
+  int end_period_for_payment = FALSE;
+
+  start_period_for_payment = calculate_days_from_christmas_to_date(start_date);
+  plus_month_period(start_date, current_year_type, interest_rate,
+                    extra_day_from_leap_year);
 }
 
 void plus_day_period(datum *start_date, int *current_year_type,
@@ -174,6 +185,13 @@ double plus_week_period(datum *start_date, int *current_year_type,
   } else {
     start_date->date = start_date->date + PER_WEEK;
   }
+
+  return result;
+}
+
+double plus_month_period(datum *start_date, int *current_year_type,
+                         double interest_rate, int *extra_day_from_leap_year) {
+  double result = FALSE;
 
   return result;
 }

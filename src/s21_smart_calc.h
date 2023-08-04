@@ -325,10 +325,15 @@ void per_week_calculate(datum *start_date, int *current_year_type,
                         int *remaining_days, double *term,
                         double *day_period_interest_rate,
                         double *deposit_amount, int *payout_frequency);
+void per_month_calculate(datum *start_date, double *term,
+                         double *deposit_amount, int *current_year_type,
+                         double interest_rate, int *extra_day_from_leap_year);
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year);
 double plus_week_period(datum *start_date, int *current_year_type,
                         double interest_rate, int *extra_day_from_leap_year);
+double plus_month_period(datum *start_date, int *current_year_type,
+                         double interest_rate, int *extra_day_from_leap_year);
 double leap_and_not_leap_periods(datum *start_date, double interest_rate,
                                  int *current_year_type);
 void calculate_remain_days_from_biggets_periods(
