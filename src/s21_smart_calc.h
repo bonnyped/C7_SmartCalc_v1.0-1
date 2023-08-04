@@ -13,8 +13,10 @@
 #define MAX_CAPACITY_OF_NAME_FUNCTION 6
 #define NUMBER_OF_OPERATORS 7
 #define NUMBER_OF_ENTITIES 5
+#define JANUARY_MONTH 1
 #define UNO 1
 #define MONTHS_IN_YEAR 12
+#define s21_epsilon 1e-7
 
 typedef struct stack {
   char *data;
@@ -24,7 +26,7 @@ typedef struct stack {
   struct stack *next_element_stack;
 } stack;
 
-typedef struct credit_struct {
+typedef struct credit {
   double loan_body;
   double term;
   double interest_rate;
@@ -33,7 +35,39 @@ typedef struct credit_struct {
   double monthly_payment_min;
   double loan_overpayment;
   double total_payment;
-} credit_struct;
+} credit;
+
+typedef struct withdrawals {
+  int type_of_whithdrawl;
+  int frequency;
+  int date;
+  int month;
+  int year;
+  double amount;
+} withdrawals;
+
+typedef struct deposit {
+  double deposit_amount;
+  double term;
+  double interest_rate;
+  double tax_rate;
+  int payout_frequency;
+  int interest_capitalization;
+  withdrawals *replenishment_list;
+  withdrawals *part_withdrawal_list;
+} deposit;
+
+typedef struct deposit_result {
+  double accrued_interest;
+  double tax_amount;
+  double amount_on_deposit_by_the_end_of_the_term;
+} deposit_result;
+
+typedef struct datum {
+  int date;
+  int month;
+  int year;
+} datum;
 
 enum types_of_first_chars {
   IS_NUMBER = 1,
@@ -116,6 +150,11 @@ enum months_or_years {
   YEARS,
 };
 
+enum type_of_whithdrawl {
+  REMOVAL = 1,
+  REFILL,
+};
+
 enum months {
   START_OF_YEAR,
   JANUARY = 0,
@@ -132,9 +171,39 @@ enum months {
   DECEMBER = 334,
 };
 
+enum capacity_m {
+  C_JANUARY = 31,
+  C_FEBRUARY = 28,
+  C_FEBRUARY_LEAP = 29,
+  C_MARCH = 31,
+  C_APRIL = 30,
+  C_MAY,
+  C_JUNE = 30,
+  C_JULY,
+  C_AUGUST = 31,
+  C_SEPTEMBER = 30,
+  C_OCTOBER,
+  C_NOVEMBER = 30,
+  C_DECEMBER,
+};
+
 enum type_of_year {
   NOT_LEAP_YEAR = 365,
   LEAP_YEAR,
+};
+
+enum end_start_of_year {
+  END_DATE = 31,
+  START_DATE = 1,
+};
+
+enum payout_frequency {
+  PER_DAY = 1,
+  PER_WEEK = 7,
+  PER_MONTH,
+  PER_QUOTER,
+  PER_YEAR,
+  AT_THE_END_OF_TERM,
 };
 
 /* stack_functions */
@@ -224,23 +293,56 @@ void *calc_function(stack *stacked_numbers, char *leksema);
 stack *calc_operands_wtih_operators(stack *stacked_numbers, char *leksema);
 /* calc_functions */
 
-/* credit_struct_functions */
-credit_struct *s21_credit_calc(double loan_body, double term,
-                               double interest_rate, int type_of_pay,
-                               int not_months);
-void calc_whole_payments_annuitette(credit_struct *current_calculation,
+/* credit_functions */
+credit *s21_credit_calc(double loan_body, double term, double interest_rate,
+                        int type_of_pay, int not_months);
+void calc_whole_payments_annuitette(credit *current_calculation,
                                     double loan_body, double term,
                                     double interest_rate);
-void calc_annuity_rate(credit_struct *current_calculation, double loan_body,
+void calc_annuity_rate(credit *current_calculation, double loan_body,
                        double term, double interest_rate);
 double floor_pyament(double value_to_floor);
-void calc_whole_payments_differential(credit_struct *current_calculation,
+void calc_whole_payments_differential(credit *current_calculation,
                                       double loan_body, double term,
                                       double interest_rate);
-int calculate_days_in_period(int day, int *month, int *year);
-int calculate_days_from_start_era_to_current_day(int day, int *month,
-                                                 int *year);
+/* credit_functions */
+
+/* deposit_calc_functions */
+withdrawals *check_withdrawals(int type_of_whithdrawl, int frequency, int date,
+                               int month, int year, double amount);
+deposit_result *
+s21_deposit_calc(double deposit_amount, double term, double interest_rate,
+                 double tax_rate, int payout_frequency,
+                 int interest_capitalization, withdrawals *replenishment_list,
+                 withdrawals *part_withdrawal_list, datum *date_of_start);
+void per_day_calculate(datum *start_date, int *current_year_type,
+                       int *extra_day_from_leap_year, double interest_rate,
+                       int *remaining_days, double *term,
+                       double *day_period_interest_rate,
+                       double *deposit_amount);
+void per_week_calculate(datum *start_date, int *current_year_type,
+                        int *extra_day_from_leap_year, double interest_rate,
+                        int *remaining_days, double *term,
+                        double *day_period_interest_rate,
+                        double *deposit_amount, int *payout_frequency);
+void plus_day_period(datum *start_date, int *current_year_type,
+                     int *extra_day_from_leap_year);
+double plus_week_period(datum *start_date, int *current_year_type,
+                        double interest_rate, int *extra_day_from_leap_year);
+double leap_and_not_leap_periods(datum *start_date, double interest_rate,
+                                 int *current_year_type);
+void calculate_remain_days_from_biggets_periods(
+    int *remaining_days, double *term, double *day_period_interest_rate);
+double calculate_period_interest_rate(double interest_rate,
+                                      int days_in_current_year,
+                                      int days_for_count_interest);
+int calculate_days_from_christmas_to_date(datum *date_of_start);
 int is_leap_year(int number_of_year);
-/* credit_struct_functions */
+// double calculate_accrued_interest(datum *date_of_start, double
+// deposit_amount, double interest_rate);
+// int calculate_days_in_period(datum *date_of_start, int
+// *days_in_current_year); int calculate_days_from_start_era_to_current_day(int
+// day, int month, int year);
+/* deposit_calc_functions */
 
 #endif // S21_SMART_CALC_H

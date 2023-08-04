@@ -2,7 +2,8 @@
 
 int main() {
   int error = FALSE;
-  credit_struct *result = NULL;
+  credit *result = NULL;
+  deposit_result *result_dep = NULL;
   char *RPE = NULL;
   int type_of_term = MONTHS;
   char *input_string = "SiN(3.1412)\n";
@@ -15,6 +16,21 @@ int main() {
   printf("\n\n\nRPE\n%s\nRPE\n\n\n", RPE);
 
   calc_polish_revers_entry(RPE);
+
+  double deposit_amount = 100000;
+  double term = 365;
+  double interest_rate = 4;
+  double tax_rate = FALSE;
+  int payout_frequency = PER_WEEK;
+  int interest_capitalization = 4;
+  datum *date_of_start = calloc(UNO, sizeof(deposit));
+  date_of_start->date = 30;
+  date_of_start->month = 12;
+  date_of_start->year = 2023;
+
+  result_dep = s21_deposit_calc(deposit_amount, term, interest_rate, tax_rate,
+                                payout_frequency, interest_capitalization, NULL,
+                                NULL, date_of_start);
 
   printf("\n\n\nmontly_payment\n%.2lf\nmontly_payment\n\nloan_overpayment\n%."
          "2lf\nloan_overpayment\n\ntotal\n%.2lf\ntatal\n",
