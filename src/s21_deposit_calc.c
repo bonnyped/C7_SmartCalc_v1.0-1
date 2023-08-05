@@ -20,7 +20,7 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
   int temp_date = FALSE;
   int period_start = FALSE;
 
-  while (term >= FALSE) {
+  while (term > FALSE) {
     if (!current_year_type) {
       is_leap_year(start_date->year) ? current_year_type = LEAP_YEAR
                                      : (current_year_type = NOT_LEAP_YEAR);
@@ -40,8 +40,8 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
     case PER_MONTH:
       per_month_calculate(start_date, &term, &deposit_amount,
                           &current_year_type, interest_rate,
-                          &extra_day_from_leap_year, &temp_date, &period_start);
-      !term ? term-- : term;
+                          &extra_day_from_leap_year, &temp_date, &period_start,
+                          &payout_frequency, &remaining_days);
       break;
     case PER_QUOTER:
       //   per_quoter_calculate();
@@ -66,15 +66,35 @@ void per_day_calculate(datum *start_date, int *current_year_type,
                        double *deposit_amount) {
   double payment_of_period = FALSE;
   double day_period_interest_rate = FALSE;
+  int residue_period = FALSE;
+  double residue_period_interest = FALSE;
 
-  plus_day_period(start_date, current_year_type, extra_day_from_leap_year);
-  day_period_interest_rate =
-      calculate_period_interest_rate(interest_rate, *current_year_type, UNO);
-  calculate_remain_days_from_biggets_periods(remaining_days, term,
-                                             &day_period_interest_rate);
-  payment_of_period = floor_pyament(*deposit_amount * day_period_interest_rate);
-  *deposit_amount += payment_of_period;
-  *term -= UNO;
+  residue_period = calculate_remain_days_from_biggets_periods(
+      start_date, remaining_days, term, current_year_type);
+
+  if (!residue_period) {
+    plus_day_period(start_date, current_year_type, extra_day_from_leap_year);
+    day_period_interest_rate =
+        calculate_period_interest_rate(interest_rate, *current_year_type, UNO);
+    payment_of_period =
+        floor_pyament(*deposit_amount * day_period_interest_rate);
+    *deposit_amount += payment_of_period;
+    *term -= UNO;
+    if (*term == FALSE)
+      *term = *extra_day_from_leap_year;
+    *extra_day_from_leap_year = FALSE;
+  } else {
+    while (residue_period) {
+      plus_day_period(start_date, current_year_type, extra_day_from_leap_year);
+      day_period_interest_rate = calculate_period_interest_rate(
+          interest_rate, *current_year_type, UNO);
+      residue_period_interest += day_period_interest_rate;
+      residue_period--;
+    }
+    payment_of_period =
+        floor_pyament(*deposit_amount * residue_period_interest);
+    *deposit_amount += payment_of_period;
+  }
 }
 
 void per_week_calculate(datum *start_date, int *current_year_type,
@@ -82,56 +102,68 @@ void per_week_calculate(datum *start_date, int *current_year_type,
                         int *remaining_days, double *term,
                         double *deposit_amount, int *payout_frequency) {
   double week_interest = FALSE;
+  int week = PER_WEEK;
 
-  if (*term > PER_WEEK) {
+  if (*term >= week) {
+    *term = *term - PER_WEEK;
     week_interest = plus_week_period(start_date, current_year_type,
                                      interest_rate, extra_day_from_leap_year);
     if (week_interest < s21_epsilon) {
-      week_interest = calculate_period_interest_rate(interest_rate,
-                                                     *current_year_type, UNO) *
-                      PER_WEEK;
+      week_interest = calculate_period_interest_rate(
+          interest_rate, *current_year_type, UNO * week);
     }
     *deposit_amount += floor_pyament(*deposit_amount * week_interest);
-    *term = *term - PER_WEEK;
   } else {
     *payout_frequency = PER_DAY;
     *remaining_days = TRUE;
-    if (*extra_day_from_leap_year) {
-      *term = *term + *extra_day_from_leap_year;
-    }
   }
 }
 
 void per_month_calculate(datum *start_date, double *term,
                          double *deposit_amount, int *current_year_type,
                          double interest_rate, int *extra_day_from_leap_year,
-                         int *temp_date, int *period_start) {
+                         int *temp_date, int *period_start,
+                         int *payout_frequency, int *remaining_days) {
   double month_interest = FALSE;
   int period_end = FALSE;
   double result = FALSE; /* удалить, техническая переменная */
   int condition_res =
       conditions_check_month(start_date, current_year_type, temp_date);
 
-  !*period_start
-      ? *period_start = calculate_days_from_christmas_to_date(start_date)
-      : *period_start;
+  if (*term >=
+      (condition_res == DECEMBER ? THIRTY_ONE_DAY_MONTH : condition_res)) {
+    !*period_start
+        ? *period_start = calculate_days_from_christmas_to_date(start_date)
+        : *period_start;
 
-  condition_res == DECEMBER ? *term -= THIRTY_ONE_DAY_MONTH
-                            : (*term -= condition_res);
-  month_interest = plus_month_period(start_date, current_year_type,
-                                     interest_rate, extra_day_from_leap_year,
-                                     temp_date, &month_interest, condition_res);
-  period_end = calculate_days_from_christmas_to_date(start_date);
+    condition_res == DECEMBER ? *term -= THIRTY_ONE_DAY_MONTH
+                              : (*term -= condition_res);
+    month_interest = plus_month_period(
+        start_date, current_year_type, interest_rate, extra_day_from_leap_year,
+        temp_date, &month_interest, condition_res);
+    period_end = calculate_days_from_christmas_to_date(start_date);
+    check_not_ended_leap_year(term, current_year_type, &period_end);
 
-  month_interest < s21_epsilon
-      ? month_interest = calculate_period_interest_rate(
-            interest_rate, *current_year_type, period_end - *period_start)
-      : month_interest;
+    month_interest < s21_epsilon
+        ? month_interest = calculate_period_interest_rate(
+              interest_rate, *current_year_type, period_end - *period_start)
+        : month_interest;
 
-  *period_start = period_end;
+    *period_start = period_end;
 
-  result = floor_pyament(*deposit_amount * month_interest);
-  *deposit_amount += result;
+    result = floor_pyament(*deposit_amount * month_interest);
+    *deposit_amount += result;
+  } else {
+    *payout_frequency = PER_DAY;
+    *remaining_days = TRUE;
+    if (*extra_day_from_leap_year && *current_year_type == LEAP_YEAR &&
+        start_date->month > 2 &&
+        (condition_res < DECEMBER ||
+         (condition_res == DECEMBER &&
+          start_date->date + (int)*term < THIRTY_ONE_DAY_MONTH))) {
+      *term = *term - UNO;
+    }
+  }
 }
 
 void plus_day_period(datum *start_date, int *current_year_type,
@@ -162,7 +194,7 @@ void plus_day_period(datum *start_date, int *current_year_type,
     break;
   case THIRTY_ONE_DAY_MONTH:
     start_date->date = 1;
-    start_date->month = 1;
+    start_date->month += 1;
     break;
   default:
     start_date->date++;
@@ -347,15 +379,23 @@ double leap_and_not_leap_periods(datum *start_date, double interest_rate,
   return result;
 }
 
-void calculate_remain_days_from_biggets_periods(
-    int *remaining_days, double *term, double *day_period_interest_rate) {
+int calculate_remain_days_from_biggets_periods(datum *start_date,
+                                               int *remaining_days,
+                                               double *term,
+                                               int *current_year_type) {
   if (*remaining_days) {
     *remaining_days = FALSE;
-    while (*term > FALSE) {
-      *term -= UNO;
-      *remaining_days += UNO;
-    }
-    *day_period_interest_rate *= *remaining_days;
+    *remaining_days += fabs(*term);
+    *term = FALSE;
+  }
+
+  return *remaining_days;
+}
+
+void check_not_ended_leap_year(double *term, int *current_year_type,
+                               int *period_end) {
+  if (*term <= FALSE && *current_year_type == LEAP_YEAR) {
+    *period_end -= UNO;
   }
 }
 

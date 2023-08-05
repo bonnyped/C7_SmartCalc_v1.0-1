@@ -18,10 +18,10 @@ int main() {
   calc_polish_revers_entry(RPE);
 
   double deposit_amount = 100000;
-  double term = 385;
+  double term = 17;
   double interest_rate = 4;
   double tax_rate = FALSE;
-  int payout_frequency = PER_MONTH;
+  int payout_frequency = PER_WEEK;
   int interest_capitalization = 4;
   datum *date_of_start = calloc(UNO, sizeof(deposit));
   date_of_start->date = 30;

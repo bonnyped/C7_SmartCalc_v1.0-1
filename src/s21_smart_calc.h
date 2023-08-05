@@ -321,7 +321,8 @@ void per_week_calculate(datum *start_date, int *current_year_type,
 void per_month_calculate(datum *start_date, double *term,
                          double *deposit_amount, int *current_year_type,
                          double interest_rate, int *extra_day_from_leap_year,
-                         int *temp_date, int *period_start);
+                         int *temp_date, int *period_start,
+                         int *payout_frequency, int *remaining_days);
 int check_number_of_month_days(datum *start_date, int *current_year_type);
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year);
@@ -340,8 +341,12 @@ int conditions_check_month(datum *start_date, int *current_year_type,
 double leap_and_not_leap_periods(datum *start_date, double interest_rate,
                                  int *current_year_type,
                                  int count_days_in_period);
-void calculate_remain_days_from_biggets_periods(
-    int *remaining_days, double *term, double *day_period_interest_rate);
+int calculate_remain_days_from_biggets_periods(datum *start_date,
+                                               int *remaining_days,
+                                               double *term,
+                                               int *current_year_type);
+void check_not_ended_leap_year(double *term, int *current_year_type,
+                               int *period_end);
 double calculate_period_interest_rate(double interest_rate,
                                       int days_in_current_year,
                                       int days_for_count_interest);
