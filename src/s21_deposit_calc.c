@@ -5,9 +5,7 @@ static int days_before_month[UNO + MONTHS_IN_YEAR] = {
     JULY,          AUGUST,  SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER};
 
 static int month_capacity[UNO + MONTHS_IN_YEAR] = {
-    START_OF_YEAR, C_JANUARY,  C_FEBRUARY, C_MARCH,  C_APRIL,
-    C_MAY,         C_JUNE,     C_JULY,     C_AUGUST, C_SEPTEMBER,
-    C_OCTOBER,     C_NOVEMBER, C_DECEMBER};
+    START_OF_YEAR, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 deposit_result *
 s21_deposit_calc(double deposit_amount, double term, double interest_rate,
@@ -17,34 +15,33 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
   //   deposit *deposit_data = calloc(UNO, sizeof(deposit));
   deposit_result *outcome = NULL;
   int current_year_type = FALSE;
-  double day_period_interest_rate = FALSE;
-  int remaining_days = TRUE;
+  int remaining_days = FALSE;
   int extra_day_from_leap_year = FALSE;
+  int temp_date = FALSE;
+  int period_start = FALSE;
 
   while (term >= FALSE) {
     if (!current_year_type) {
       is_leap_year(start_date->year) ? current_year_type = LEAP_YEAR
                                      : (current_year_type = NOT_LEAP_YEAR);
-      day_period_interest_rate =
-          calculate_period_interest_rate(interest_rate, current_year_type, UNO);
     }
     switch (payout_frequency) {
     case PER_DAY:
       per_day_calculate(start_date, &current_year_type,
                         &extra_day_from_leap_year, interest_rate,
-                        &remaining_days, &term, &day_period_interest_rate,
-                        &deposit_amount);
+                        &remaining_days, &term, &deposit_amount);
       break;
     case PER_WEEK:
       per_week_calculate(start_date, &current_year_type,
                          &extra_day_from_leap_year, interest_rate,
-                         &remaining_days, &term, &day_period_interest_rate,
-                         &deposit_amount, &payout_frequency);
+                         &remaining_days, &term, &deposit_amount,
+                         &payout_frequency);
       break;
     case PER_MONTH:
-      //   per_month_calculate(start_date, &term, &deposit_amount,
-      //                       &current_year_type, interest_rate,
-      //                       &extra_day_from_leap_year);
+      per_month_calculate(start_date, &term, &deposit_amount,
+                          &current_year_type, interest_rate,
+                          &extra_day_from_leap_year, &temp_date, &period_start);
+      !term ? term-- : term;
       break;
     case PER_QUOTER:
       //   per_quoter_calculate();
@@ -66,17 +63,16 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
 void per_day_calculate(datum *start_date, int *current_year_type,
                        int *extra_day_from_leap_year, double interest_rate,
                        int *remaining_days, double *term,
-                       double *day_period_interest_rate,
                        double *deposit_amount) {
   double payment_of_period = FALSE;
+  double day_period_interest_rate = FALSE;
 
   plus_day_period(start_date, current_year_type, extra_day_from_leap_year);
-  *day_period_interest_rate =
+  day_period_interest_rate =
       calculate_period_interest_rate(interest_rate, *current_year_type, UNO);
   calculate_remain_days_from_biggets_periods(remaining_days, term,
-                                             day_period_interest_rate);
-  payment_of_period =
-      floor_pyament(*deposit_amount * (*day_period_interest_rate));
+                                             &day_period_interest_rate);
+  payment_of_period = floor_pyament(*deposit_amount * day_period_interest_rate);
   *deposit_amount += payment_of_period;
   *term -= UNO;
 }
@@ -84,24 +80,22 @@ void per_day_calculate(datum *start_date, int *current_year_type,
 void per_week_calculate(datum *start_date, int *current_year_type,
                         int *extra_day_from_leap_year, double interest_rate,
                         int *remaining_days, double *term,
-                        double *day_period_interest_rate,
                         double *deposit_amount, int *payout_frequency) {
   double week_interest = FALSE;
-  double payment_of_period = FALSE;
+
   if (*term > PER_WEEK) {
     week_interest = plus_week_period(start_date, current_year_type,
                                      interest_rate, extra_day_from_leap_year);
     if (week_interest < s21_epsilon) {
-      *day_period_interest_rate = calculate_period_interest_rate(
-          interest_rate, *current_year_type, UNO);
-      week_interest = *day_period_interest_rate * PER_WEEK;
+      week_interest = calculate_period_interest_rate(interest_rate,
+                                                     *current_year_type, UNO) *
+                      PER_WEEK;
     }
-    payment_of_period = floor_pyament(*deposit_amount * week_interest);
-    *deposit_amount += payment_of_period;
+    *deposit_amount += floor_pyament(*deposit_amount * week_interest);
     *term = *term - PER_WEEK;
   } else {
     *payout_frequency = PER_DAY;
-    *remaining_days = FALSE;
+    *remaining_days = TRUE;
     if (*extra_day_from_leap_year) {
       *term = *term + *extra_day_from_leap_year;
     }
@@ -110,26 +104,47 @@ void per_week_calculate(datum *start_date, int *current_year_type,
 
 void per_month_calculate(datum *start_date, double *term,
                          double *deposit_amount, int *current_year_type,
-                         double interest_rate, int *extra_day_from_leap_year) {
-  int start_period_for_payment = FALSE;
-  int end_period_for_payment = FALSE;
+                         double interest_rate, int *extra_day_from_leap_year,
+                         int *temp_date, int *period_start) {
+  double month_interest = FALSE;
+  int period_end = FALSE;
+  double result = FALSE; /* удалить, техническая переменная */
+  int condition_res =
+      conditions_check_month(start_date, current_year_type, temp_date);
 
-  start_period_for_payment = calculate_days_from_christmas_to_date(start_date);
-  //   plus_month_period(start_date, current_year_type, interest_rate,
-  //                     extra_day_from_leap_year);
+  !*period_start
+      ? *period_start = calculate_days_from_christmas_to_date(start_date)
+      : *period_start;
+
+  condition_res == DECEMBER ? *term -= THIRTY_ONE_DAY_MONTH
+                            : (*term -= condition_res);
+  month_interest = plus_month_period(start_date, current_year_type,
+                                     interest_rate, extra_day_from_leap_year,
+                                     temp_date, &month_interest, condition_res);
+  period_end = calculate_days_from_christmas_to_date(start_date);
+
+  month_interest < s21_epsilon
+      ? month_interest = calculate_period_interest_rate(
+            interest_rate, *current_year_type, period_end - *period_start)
+      : month_interest;
+
+  *period_start = period_end;
+
+  result = floor_pyament(*deposit_amount * month_interest);
+  *deposit_amount += result;
 }
 
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year) {
-  int check_result = conditions_check_day(start_date, current_year_type,
-                                          extra_day_from_leap_year);
+  int condition = conditions_check_day(start_date, current_year_type,
+                                       extra_day_from_leap_year);
 
-  switch (check_result) {
-  case NOT_LEAP_FEBRUARY:
+  switch (condition) {
+  case FEBRUARY_NL:
     start_date->date = 1;
     start_date->month++;
     break;
-  case LEAP_FEBRUARY:
+  case FEBRUARY_L:
     start_date->date = 1;
     start_date->month++;
     *extra_day_from_leap_year += UNO;
@@ -138,8 +153,8 @@ void plus_day_period(datum *start_date, int *current_year_type,
     start_date->date = 1;
     start_date->month++;
     break;
-  case END_OF_DECEMBER:
-    start_date->date += PER_DAY - C_DECEMBER;
+  case DECEMBER:
+    start_date->date += PER_DAY - THIRTY_ONE_DAY_MONTH;
     start_date->month = MONTHS_IN_YEAR - 11;
     start_date->year++;
     is_leap_year(start_date->year) ? *current_year_type = LEAP_YEAR
@@ -158,22 +173,22 @@ void plus_day_period(datum *start_date, int *current_year_type,
 int conditions_check_day(datum *start_date, int *current_year_type,
                          int *extra_day_from_leap_year) {
   int result = FALSE;
-  if (start_date->date == C_FEBRUARY &&
-      month_capacity[start_date->month] == C_FEBRUARY &&
+  if (start_date->date == FEBRUARY_NL &&
+      month_capacity[start_date->month] == FEBRUARY_NL &&
       *current_year_type == NOT_LEAP_YEAR)
-    result = NOT_LEAP_FEBRUARY;
-  else if (start_date->date == C_FEBRUARY_LEAP &&
-           month_capacity[start_date->month] == C_FEBRUARY &&
+    result = FEBRUARY_NL;
+  else if (start_date->date == FEBRUARY_L &&
+           month_capacity[start_date->month] == FEBRUARY_NL &&
            *current_year_type == LEAP_YEAR)
-    result = LEAP_FEBRUARY;
-  else if (start_date->date == C_APRIL &&
-           (month_capacity[start_date->month] == C_APRIL))
+    result = FEBRUARY_L;
+  else if (start_date->date == THIRTY_DAY_MONTH &&
+           (month_capacity[start_date->month] == THIRTY_DAY_MONTH))
     result = THIRTY_DAY_MONTH;
-  else if (start_date->date == C_DECEMBER &&
+  else if (start_date->date == THIRTY_ONE_DAY_MONTH &&
            start_date->month == MONTHS_IN_YEAR)
-    result = END_OF_DECEMBER;
-  else if (start_date->date == C_JANUARY &&
-           (month_capacity[start_date->month] == C_JANUARY))
+    result = DECEMBER;
+  else if (start_date->date == THIRTY_ONE_DAY_MONTH &&
+           (month_capacity[start_date->month] == THIRTY_ONE_DAY_MONTH))
     result = THIRTY_ONE_DAY_MONTH;
 
   return result;
@@ -182,34 +197,31 @@ int conditions_check_day(datum *start_date, int *current_year_type,
 double plus_week_period(datum *start_date, int *current_year_type,
                         double interest_rate, int *extra_day_from_leap_year) {
   double result = FALSE;
-  int check_result = FALSE;
-
-  check_result = conditions_check_week(start_date, current_year_type,
-                                       extra_day_from_leap_year);
-  switch (check_result) {
+  int condition = conditions_check_week(start_date, current_year_type,
+                                        extra_day_from_leap_year);
+  switch (condition) {
   case MORE_THAN_FABRUARY_NOT_LEAP:
-    start_date->date = start_date->date + PER_WEEK - C_FEBRUARY;
+    start_date->date = start_date->date + PER_WEEK - FEBRUARY_NL;
     start_date->month++;
     break;
   case MORE_THAN_FABRUARY_LEAP:
-    start_date->date = start_date->date + PER_WEEK - C_FEBRUARY +
-                       (*current_year_type - NOT_LEAP_YEAR);
+    start_date->date = start_date->date + PER_WEEK - FEBRUARY_L;
     start_date->month++;
     *extra_day_from_leap_year += UNO;
     break;
   case MORE_THEN_THRTY_DAY_MONTH:
-    start_date->date = start_date->date + PER_WEEK - C_APRIL;
+    start_date->date = start_date->date + PER_WEEK - THIRTY_DAY_MONTH;
     start_date->month++;
     break;
   case MORE_THAN_DECEMBER:
-    start_date->date = start_date->date + PER_WEEK - C_DECEMBER;
+    start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
     start_date->month = MONTHS_IN_YEAR - 11;
     start_date->year++;
-    result =
-        leap_and_not_leap_periods(start_date, interest_rate, current_year_type);
+    result = leap_and_not_leap_periods(start_date, interest_rate,
+                                       current_year_type, PER_WEEK);
     break;
-  case THIRTY_ONE_DAYS_MONTH:
-    start_date->date = start_date->date + PER_WEEK - C_JANUARY;
+  case THIRTY_ONE_DAY_MONTH:
+    start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
     start_date->month++;
     break;
   default:
@@ -224,31 +236,99 @@ double conditions_check_week(datum *start_date, int *current_year_type,
                              int *extra_day_from_leap_year) {
   double result = FALSE;
 
-  if (start_date->date + PER_WEEK > C_FEBRUARY &&
-      month_capacity[start_date->month] == C_FEBRUARY &&
+  if (start_date->date + PER_WEEK > FEBRUARY_NL &&
+      month_capacity[start_date->month] == FEBRUARY_NL &&
       *current_year_type == NOT_LEAP_YEAR)
     result = MORE_THAN_FABRUARY_NOT_LEAP;
-  else if (start_date->date + PER_WEEK > C_FEBRUARY_LEAP &&
-           month_capacity[start_date->month] == C_FEBRUARY &&
+  else if (start_date->date + PER_WEEK > FEBRUARY_L &&
+           month_capacity[start_date->month] == FEBRUARY_NL &&
            *current_year_type == LEAP_YEAR)
     result = MORE_THAN_FABRUARY_LEAP;
-  else if (start_date->date + PER_WEEK > C_APRIL &&
-           (month_capacity[start_date->month] == C_APRIL))
+  else if (start_date->date + PER_WEEK > THIRTY_DAY_MONTH &&
+           (month_capacity[start_date->month] == THIRTY_DAY_MONTH))
     result = MORE_THEN_THRTY_DAY_MONTH;
-  else if (start_date->date + PER_WEEK > C_DECEMBER &&
+  else if (start_date->date + PER_WEEK > THIRTY_ONE_DAY_MONTH &&
            start_date->month == MONTHS_IN_YEAR)
     result = MORE_THAN_DECEMBER;
-  else if (start_date->date + PER_WEEK > C_JANUARY &&
-           month_capacity[start_date->month] == C_JANUARY)
-    result = THIRTY_ONE_DAYS_MONTH;
+  else if (start_date->date + PER_WEEK > THIRTY_ONE_DAY_MONTH &&
+           month_capacity[start_date->month] == THIRTY_ONE_DAY_MONTH)
+    result = THIRTY_ONE_DAY_MONTH;
+
+  return result;
+}
+
+double plus_month_period(datum *start_date, int *current_year_type,
+                         double interest_rate, int *extra_day_from_leap_year,
+                         int *temp_date, double *month_interest,
+                         int condition_res) {
+  double result = FALSE;
+  !*temp_date ? *temp_date = start_date->date : *temp_date;
+
+  switch (condition_res) {
+  case FEBRUARY_NL:
+    start_date->date = FEBRUARY_NL;
+    start_date->month++;
+    break;
+  case FEBRUARY_L:
+    start_date->date = FEBRUARY_L;
+    start_date->month++;
+    *extra_day_from_leap_year += UNO;
+    break;
+  case THIRTY_DAY_MONTH:
+    start_date->date = THIRTY_DAY_MONTH;
+    start_date->month++;
+    break;
+  case DECEMBER:
+    start_date->date = *temp_date;
+    start_date->month = MONTHS_IN_YEAR - 11;
+    start_date->year++;
+    result = leap_and_not_leap_periods(start_date, interest_rate,
+                                       current_year_type, PER_MONTH);
+    break;
+  case THIRTY_ONE_DAY_MONTH:
+    start_date->date = *temp_date;
+    start_date->month++;
+    break;
+  default:
+    start_date->date = *temp_date;
+    start_date->month++;
+    break;
+  }
+
+  return result;
+}
+
+int conditions_check_month(datum *start_date, int *current_year_type,
+                           int *temp_date) {
+  int result = FALSE;
+
+  if (*temp_date > FEBRUARY_NL && start_date->month == JANUARY_MONTH &&
+      *current_year_type == NOT_LEAP_YEAR)
+    result = FEBRUARY_NL;
+  else if (*temp_date > FEBRUARY_L && start_date->month == JANUARY_MONTH &&
+           *current_year_type == LEAP_YEAR)
+    result = FEBRUARY_L;
+  else if (*temp_date > THIRTY_DAY_MONTH &&
+           (month_capacity[start_date->month] == THIRTY_DAY_MONTH))
+    result = THIRTY_ONE_DAY_MONTH;
+  else if (start_date->month == MONTHS_IN_YEAR)
+    result = DECEMBER;
+  else if (month_capacity[start_date->month] == THIRTY_ONE_DAY_MONTH &&
+           start_date->month != 7)
+    result = THIRTY_DAY_MONTH;
+  else if (start_date->month == 7)
+    result = THIRTY_ONE_DAY_MONTH;
+  else
+    result = month_capacity[start_date->month + UNO];
 
   return result;
 }
 
 double leap_and_not_leap_periods(datum *start_date, double interest_rate,
-                                 int *current_year_type) {
-  int days_in_previous_period = PER_WEEK - start_date->date;
-  int days_in_current_period = PER_WEEK - days_in_previous_period;
+                                 int *current_year_type,
+                                 int count_days_in_period) {
+  int days_in_previous_period = count_days_in_period - start_date->date;
+  int days_in_current_period = count_days_in_period - days_in_previous_period;
   int previous_year_type = FALSE;
   double result = FALSE;
 
@@ -257,7 +337,8 @@ double leap_and_not_leap_periods(datum *start_date, double interest_rate,
   is_leap_year(start_date->year) ? *current_year_type = LEAP_YEAR
                                  : (*current_year_type = NOT_LEAP_YEAR);
 
-  if (start_date->date < PER_WEEK && *current_year_type != previous_year_type) {
+  if (start_date->date < count_days_in_period &&
+      *current_year_type != previous_year_type) {
     result = calculate_period_interest_rate(interest_rate, previous_year_type,
                                             days_in_previous_period);
     result += calculate_period_interest_rate(interest_rate, *current_year_type,
@@ -268,7 +349,8 @@ double leap_and_not_leap_periods(datum *start_date, double interest_rate,
 
 void calculate_remain_days_from_biggets_periods(
     int *remaining_days, double *term, double *day_period_interest_rate) {
-  if (!*remaining_days) {
+  if (*remaining_days) {
+    *remaining_days = FALSE;
     while (*term > FALSE) {
       *term -= UNO;
       *remaining_days += UNO;
@@ -388,9 +470,13 @@ int calculate_days_from_christmas_to_date(datum *start_date) {
   int result = FALSE;
   int temp_year = start_date->year - UNO;
 
-  result = start_date->date + days_before_month[start_date->month] +
-           ((is_leap_year(start_date->year) == LEAP_YEAR)) + temp_year * 365 +
-           temp_year / 4 - temp_year / 100 + temp_year / 400;
+  result += start_date->date;
+  result += days_before_month[start_date->month];
+  result += (is_leap_year(start_date->year) && start_date->month > 2);
+  result += temp_year * 365;
+  result += temp_year / 4;
+  result -= temp_year / 100;
+  result += temp_year / 400;
 
   return result;
 }

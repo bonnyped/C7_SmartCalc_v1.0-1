@@ -171,22 +171,6 @@ enum months {
   DECEMBER = 334,
 };
 
-enum capacity_m {
-  C_JANUARY = 31,
-  C_FEBRUARY = 28,
-  C_FEBRUARY_LEAP = 29,
-  C_MARCH = 31,
-  C_APRIL = 30,
-  C_MAY,
-  C_JUNE = 30,
-  C_JULY,
-  C_AUGUST = 31,
-  C_SEPTEMBER = 30,
-  C_OCTOBER,
-  C_NOVEMBER = 30,
-  C_DECEMBER,
-};
-
 enum type_of_year {
   NOT_LEAP_YEAR = 365,
   LEAP_YEAR,
@@ -200,26 +184,21 @@ enum end_start_of_year {
 enum payout_frequency {
   PER_DAY = 1,
   PER_WEEK = 7,
-  PER_MONTH,
+  PER_MONTH = 31,
   PER_QUOTER,
   PER_YEAR,
   AT_THE_END_OF_TERM,
 };
 
-enum conditions_for_adding_days {
-  NOT_LEAP_FEBRUARY = 1,
-  LEAP_FEBRUARY,
+enum conditions_for_adding_periods {
+  FEBRUARY_NL = 28,
+  FEBRUARY_L,
   THIRTY_DAY_MONTH,
-  END_OF_DECEMBER,
   THIRTY_ONE_DAY_MONTH,
-};
-
-enum conditions_for_adding_weeks {
   MORE_THAN_FABRUARY_NOT_LEAP = 1,
   MORE_THAN_FABRUARY_LEAP,
   MORE_THEN_THRTY_DAY_MONTH,
   MORE_THAN_DECEMBER,
-  THIRTY_ONE_DAYS_MONTH,
 };
 
 /* stack_functions */
@@ -334,16 +313,16 @@ s21_deposit_calc(double deposit_amount, double term, double interest_rate,
 void per_day_calculate(datum *start_date, int *current_year_type,
                        int *extra_day_from_leap_year, double interest_rate,
                        int *remaining_days, double *term,
-                       double *day_period_interest_rate,
                        double *deposit_amount);
 void per_week_calculate(datum *start_date, int *current_year_type,
                         int *extra_day_from_leap_year, double interest_rate,
                         int *remaining_days, double *term,
-                        double *day_period_interest_rate,
                         double *deposit_amount, int *payout_frequency);
 void per_month_calculate(datum *start_date, double *term,
                          double *deposit_amount, int *current_year_type,
-                         double interest_rate, int *extra_day_from_leap_year);
+                         double interest_rate, int *extra_day_from_leap_year,
+                         int *temp_date, int *period_start);
+int check_number_of_month_days(datum *start_date, int *current_year_type);
 void plus_day_period(datum *start_date, int *current_year_type,
                      int *extra_day_from_leap_year);
 int conditions_check_day(datum *start_date, int *current_year_type,
@@ -353,9 +332,14 @@ double plus_week_period(datum *start_date, int *current_year_type,
 double conditions_check_week(datum *start_date, int *current_year_type,
                              int *extra_day_from_leap_year);
 double plus_month_period(datum *start_date, int *current_year_type,
-                         double interest_rate, int *extra_day_from_leap_year);
+                         double interest_rate, int *extra_day_from_leap_year,
+                         int *temp_date, double *month_interest,
+                         int condition_res);
+int conditions_check_month(datum *start_date, int *current_year_type,
+                           int *temp_date);
 double leap_and_not_leap_periods(datum *start_date, double interest_rate,
-                                 int *current_year_type);
+                                 int *current_year_type,
+                                 int count_days_in_period);
 void calculate_remain_days_from_biggets_periods(
     int *remaining_days, double *term, double *day_period_interest_rate);
 double calculate_period_interest_rate(double interest_rate,
