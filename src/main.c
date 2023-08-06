@@ -18,15 +18,15 @@ int main() {
   calc_polish_revers_entry(RPE);
 
   double deposit_amount = 100000;
-  double term = 17;
+  double term = 595;
   double interest_rate = 4;
   double tax_rate = FALSE;
-  int payout_frequency = PER_WEEK;
+  int payout_frequency = PER_DAY;
   int interest_capitalization = 4;
   datum *date_of_start = calloc(UNO, sizeof(deposit));
   date_of_start->date = 30;
   date_of_start->month = 12;
-  date_of_start->year = 2023;
+  date_of_start->year = 2022;
 
   result_dep = s21_deposit_calc(deposit_amount, term, interest_rate, tax_rate,
                                 payout_frequency, interest_capitalization, NULL,
