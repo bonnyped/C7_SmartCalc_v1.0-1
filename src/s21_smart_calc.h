@@ -9,6 +9,7 @@
 #include <time.h>
 
 #define MAX_CAPACITY 4096
+#define CAPACITY_OF_NAME_ERRORS 25
 #define NUMBER_OF_FUNCTIONS_PLUS_X 11
 #define MAX_CAPACITY_OF_NAME_FUNCTION 6
 #define NUMBER_OF_OPERATORS 7
@@ -17,7 +18,10 @@
 #define UNO 1
 #define MONTHS_IN_YEAR 12
 #define s21_epsilon 1e-7
+#define MAX_SIZE_DATA_SCHEDULE 20000
+#define NONTAXABLE_BASE 1000000
 
+/// @brief
 typedef struct stack {
   char *data;
   double operand;
@@ -35,39 +39,50 @@ typedef struct credit {
   double monthly_payment_min;
   double loan_overpayment;
   double total_payment;
+  int not_months;
 } credit;
-
-typedef struct withdrawals {
-  int type_of_whithdrawl;
-  int frequency;
-  int date;
-  int month;
-  int year;
-  double amount;
-} withdrawals;
-
-typedef struct deposit {
-  double deposit_amount;
-  double term;
-  double interest_rate;
-  double tax_rate;
-  int payout_frequency;
-  int interest_capitalization;
-  withdrawals *replenishment_list;
-  withdrawals *part_withdrawal_list;
-} deposit;
-
-typedef struct deposit_result {
-  double accrued_interest;
-  double tax_amount;
-  double amount_on_deposit_by_the_end_of_the_term;
-} deposit_result;
 
 typedef struct datum {
   int date;
   int month;
   int year;
 } datum;
+
+typedef struct drop_add_lists {
+  datum *date_add_drop;
+  int frequency;
+  double amount;
+} drop_add_lists;
+
+typedef struct deposit {
+  datum *start_date;
+  double amount;
+  double term;
+  double interest_rate;
+  double tax_rate;
+  int payout_frequency;
+  int interest_capitalization;
+  drop_add_lists *add_list;
+  drop_add_lists *drop_list;
+  double amount_add_drops;
+  double accumulated_balance_interest;
+  double accrued_interest;
+  double tax_amount;
+  double end_term_amount;
+} deposit;
+
+typedef struct schedule {
+  int from_christmas_date;
+  int event;
+  double amount;
+  int date;
+  int month;
+  int year;
+  double day_interest;
+  //   double balance;
+  //   double cap_balance;
+  //   double interest_balance;
+} schedule;
 
 enum types_of_first_chars {
   IS_NUMBER = 1,
@@ -77,7 +92,7 @@ enum types_of_first_chars {
 };
 
 enum input_errors {
-  NO_OPEN_BRACKET = -6,
+  NO_OPEN_BRACKET = -5,
   MORE_THEN_ONE_POINT,
   ERROR_OF_SEQUENCE,
   NOT_REALLOCED,
@@ -92,7 +107,7 @@ enum type_definition {
   PLUS = 43,
   MINUS = 45,
   UNARY_MINUS = 126,
-  POINT = 46,
+  TYPE_POINT = 46,
   DIV = 47,
   DEGREE = 94,
 };
@@ -182,12 +197,16 @@ enum end_start_of_year {
 };
 
 enum payout_frequency {
+  PER_ONCE,
   PER_DAY = 1,
   PER_WEEK = 7,
   PER_MONTH = 31,
+  PER_TWO_MONTHS,
   PER_QUOTER = 3,
-  PER_YEAR,
+  PER_TWO_QUATERS = 6,
+  PER_YEAR = MONTHS_IN_YEAR,
   AT_THE_END_OF_TERM,
+  RESEDUE_PERIOD = -1,
 };
 
 enum conditions_for_adding_periods {
@@ -208,6 +227,22 @@ enum capacity_quoter {
   LONG_QUOTER,
 };
 
+enum actions {
+  ADD_DATE = 1,
+  DROP_DATE,
+  END_OF_YEAR,
+  END_OF_PERIOD,
+};
+
+enum events_type {
+  EVENT_YEAR = 12,
+  EVENT_PAYOUT,
+  EVENT_ADD,
+  EVENT_DROP,
+};
+
+void function_print(schedule **data_schedule, int counter, deposit *data);
+
 /* stack_functions */
 stack *s21_push(stack *next_el);
 stack *s21_pop(stack *next_el);
@@ -218,7 +253,7 @@ void s21_set_associativity(stack *current_el, char *operation);
 /* stack_functions */
 
 /* inverse_polish_notation_functions */
-char *string_conversion(char *input_string);
+char *string_conversion(char *input_string, int *error);
 int check_spaces_input_string(char *A, int *max_capacity_calloc,
                               char *transformed_string);
 stack *add_number_output_string(char *A, char *B, int *start_to_write,
@@ -280,24 +315,23 @@ int abbreviation_functions_name(int number_of_vectors_element);
 
 /* check_functions */
 int check_sequence(int *previous_entity, int *current_sequence_element,
-                   int type_of_first_char, int element_of_vector, int operator);
+                   int type_of_first_char, int element_of_vector, int operat);
 int check_points_in_number(const char *B);
 int multiplicity_plus_minus_check(const char *current_operator, int index_A,
-                                  char *operator);
+                                  char *operator_l);
 /* check_functions */
 
 /* calc_functions */
-double calc_polish_revers_entry(char *pre);
-int check_entity(char *start);
-stack *calc_or_stack(int entity, stack *stacked_numbers, char *leksema);
-stack *add_number_stack(stack *stacked_numbers, char *leksema);
-void *calc_function(stack *stacked_numbers, char *leksema);
+double calc_polish_reverse_entry(char *pre, double x_number);
+int check_entity(char *start, double *converted_number, double x_number);
+stack *calc_or_stack(int entity, stack *stacked_numbers, char *leksema,
+                     double converted_number);
+void calc_function(stack *stacked_numbers, char *leksema);
 stack *calc_operands_wtih_operators(stack *stacked_numbers, char *leksema);
 /* calc_functions */
 
 /* credit_functions */
-credit *s21_credit_calc(double loan_body, double term, double interest_rate,
-                        int type_of_pay, int not_months);
+void s21_credit_calc(credit *current_calculation);
 void calc_whole_payments_annuitette(credit *current_calculation,
                                     double loan_body, double term,
                                     double interest_rate);
@@ -310,62 +344,35 @@ void calc_whole_payments_differential(credit *current_calculation,
 /* credit_functions */
 
 /* deposit_calc_functions */
-withdrawals *check_withdrawals(int type_of_whithdrawl, int frequency, int date,
-                               int month, int year, double amount);
-deposit_result *
-s21_deposit_calc(double deposit_amount, double term, double interest_rate,
-                 double tax_rate, int payout_frequency,
-                 int interest_capitalization, withdrawals *replenishment_list,
-                 withdrawals *part_withdrawal_list, datum *date_of_start);
-void per_day_calculate(datum *start_date, int *current_year_type,
-                       int *extra_day_from_leap_year, double interest_rate,
-                       int *remaining_days, double *term,
-                       double *deposit_amount);
-void per_week_calculate(datum *start_date, int *current_year_type,
-                        int *extra_day_from_leap_year, double interest_rate,
-                        int *remaining_days, double *term,
-                        double *deposit_amount, int *payout_frequency);
-void per_month_calculate(datum *start_date, double *term,
-                         double *deposit_amount, int *current_year_type,
-                         double interest_rate, int *extra_day_from_leap_year,
-                         int *temp_date, int *period_start,
-                         int *payout_frequency, int *remaining_days,
-                         int qouter);
-void per_quoter_calculate(datum *start_date, double *term,
-                          double *deposit_amount, int *current_year_type,
-                          double interest_rate, int *extra_day_from_leap_year,
-                          int *temp_date, int *period_start,
-                          int *payout_frequency, int *remaining_days,
-                          int quoter);
-int check_number_of_month_days(datum *start_date, int *current_year_type);
-void plus_day_period(datum *start_date, int *current_year_type);
-int conditions_check_day(datum *start_date, int *current_year_type);
-double plus_week_period(datum *start_date, int *current_year_type,
-                        double interest_rate, int *extra_day_from_leap_year);
-double conditions_check_week(datum *start_date, int *current_year_type,
-                             int *extra_day_from_leap_year);
-double plus_month_or_quoter_period(datum *start_date, int *current_year_type,
-                                   double interest_rate,
-                                   int *extra_day_from_leap_year,
-                                   int *temp_date, int condition_res,
-                                   int quoter);
-int conditions_check_month_and_quoter(datum *start_date, int *current_year_type,
-                                      int *temp_date, int quoter);
-double leap_and_not_leap_periods(datum *start_date, double interest_rate,
-                                 int *current_year_type,
-                                 int count_days_in_period);
-int calculate_remain_days_from_biggets_periods(datum *start_date,
-                                               int *remaining_days,
-                                               double *term,
-                                               int *current_year_type);
-void check_not_ended_leap_year(double *term, int *current_year_type,
-                               int *period_end);
-int definition_quoter_capacity(datum *start_date);
-double calculate_period_interest_rate(double interest_rate,
-                                      int days_in_current_year,
-                                      int days_for_count_interest);
+void s21_deposit_calc(deposit *data);
+void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter);
+void fill_payment_events(deposit *data, schedule **datas_buffer, int *counter);
+void fill_adds_or_drops(datum *start, double term, schedule **datas_buffer,
+                        int *counter, drop_add_lists *add_or_drop_list, int event);
+void plus_day_period(datum *start_date);
+int conditions_check_day(datum *start_date);
+void plus_week_period(datum *start_date);
+int conditions_check_week(datum *start_date);
+double plus_month_period(datum *start_date, int temp_date);
+int conditions_check_month(datum *start_date, int temp_date);
 int calculate_days_from_christmas_to_date(datum *date_of_start);
+void add_data_to_schedule(schedule **datas_buffer, int *counter, int period_end,
+                          int event, double amount, datum *current_date);
+void flip_calendar(datum *start_date, int current_frequency, int temp_date);
+void insert_sort(schedule **buffer, int count);
+void calculate_deposit(schedule **data_schedule, int counter, deposit *data);
+void year_calculates(schedule **data_schedule, int index, int *last_event,
+                     double *day_interest, double *accumulated_period_interest,
+                     deposit *data);
 int is_leap_year(int number_of_year);
+void add_drop_calculates(schedule **data_schedule, int index, int *last_event,
+                         double day_interest, deposit *data,
+                         double *accumulated_period_interest, int event_type);
+void payout_calculates(schedule **data_schedule, int index, int *last_event,
+                       double day_interest, deposit *data,
+                       double *accumulated_period_interest);
+void tax_calculate(deposit *data);
+int check_frequence_add_drop(int index);
 /* deposit_calc_functions */
 
 #endif // S21_SMART_CALC_H
