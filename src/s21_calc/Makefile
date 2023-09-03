@@ -797,7 +797,8 @@ main.o: main.cpp mainwindow.h \
 
 mainwindow.o: mainwindow.cpp mainwindow.h \
 		../s21_smart_calc.h \
-		ui_mainwindow.h
+		ui_mainwindow.h \
+		qcustomplot.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o mainwindow.cpp
 
 qcustomplot.o: qcustomplot.cpp qcustomplot.h
