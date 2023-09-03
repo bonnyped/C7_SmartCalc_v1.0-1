@@ -1,23 +1,22 @@
 #include "s21_smart_calc.h"
 
-credit *s21_credit_calc(double loan_body, double term, double interest_rate,
-                        int type_of_pay, int not_months) {
-  credit *current_calculation = calloc(UNO, sizeof(credit));
+void s21_credit_calc(credit *current_calculation) {
+  current_calculation->not_months
+      ? current_calculation->term = current_calculation->term / MONTHS_IN_YEAR
+      : current_calculation->term;
 
-  not_months ? term = term / MONTHS_IN_YEAR : term;
-
-  switch (type_of_pay) {
+  switch (current_calculation->type_of_pay) {
   case ANNUITETTE:
-    calc_whole_payments_annuitette(current_calculation, loan_body, term,
-                                   interest_rate);
+    calc_whole_payments_annuitette(
+        current_calculation, current_calculation->loan_body,
+        current_calculation->term, current_calculation->interest_rate);
     break;
   case DIFFERENTIAL:
-    calc_whole_payments_differential(current_calculation, loan_body, term,
-                                     interest_rate);
+    calc_whole_payments_differential(
+        current_calculation, current_calculation->loan_body,
+        current_calculation->term, current_calculation->interest_rate);
     break;
   };
-
-  return current_calculation;
 }
 
 void calc_whole_payments_annuitette(credit *current_calculation,
@@ -75,18 +74,3 @@ void calc_whole_payments_differential(credit *current_calculation,
   }
   current_calculation->total_payment += current_calculation->loan_overpayment;
 }
-
-// time_t date = time(NULL);
-// struct tm *today = localtime(&date);
-// int day = today->tm_mday;
-// int month = today->tm_mon + UNO;
-// int year = today->tm_year + 1900;
-// if (number_of_days_in_year == LEAP_YEAR) {
-//   if (!is_leap_year(year)) {
-//     number_of_days_in_year = NOT_LEAP_YEAR;
-//   }
-// } else if (number_of_days_in_year == NOT_LEAP_YEAR && is_leap_year(year) &&
-//            month > 2) {
-//   number_of_days_in_year = LEAP_YEAR;
-// }
-// days_in_payment_period = calculate_days_in_period(day, &month, &year);

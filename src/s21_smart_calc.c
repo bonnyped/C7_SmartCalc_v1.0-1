@@ -11,7 +11,7 @@ const int operators[NUMBER_OF_OPERATORS] = {
 
 const int regular_sequence_matrix[NUMBER_OF_OPERATORS][NUMBER_OF_ENTITIES] = {
     /* bin op_br cl_br  func  num*/
-    {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_BINARY_OPERATOR +
+    {FALSE, TRUE, FALSE, TRUE, TRUE},   // BEHIND_BINARY_OPERATOR +
     {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_OPEN_BRACKET    +
     {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_CLOSE_BRACKET   -
     {FALSE, TRUE, FALSE, FALSE, FALSE}, // BEHIND_FUNCTION        -
@@ -28,12 +28,8 @@ int check_spaces_input_string(char *A, int *max_capacity_calloc,
   int index_A = FALSE;
   int index_B = FALSE;
   int type_of_first_char = FALSE;
-  size_t length = FALSE;
   int *previous_sequence_element =
       (int *)regular_sequence_matrix[current_entity];
-
-  if (A)
-    length = strlen(A);
 
   do {
     skip = FALSE;
@@ -74,7 +70,7 @@ int check_spaces_input_string(char *A, int *max_capacity_calloc,
     }
     previous_sequence_element = (int *)regular_sequence_matrix[current_entity];
 
-  } while (A[index_A] != '\n' && index_A > 0);
+  } while (A[index_A] != '\0' && index_A > 0);
 
   previous_sequence_element = (int *)regular_sequence_matrix[LAST_CHAR];
   if (previous_sequence_element[current_entity] == FALSE)
@@ -153,7 +149,7 @@ int check_points_in_number(const char *B) {
   int count_points = FALSE;
   char *temp = NULL;
 
-  while (temp = strchr(B, POINT)) {
+  while ((temp = strchr(B, TYPE_POINT))) {
     B = temp;
     B++;
     count_points++;
@@ -190,7 +186,7 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
   }
 
   if (!error) {
-    if (*index_B + length >= *capacity)
+    if (*index_B + (int)length >= *capacity)
       error = realloc_memory(B, capacity);
 
     if (!error) {
@@ -211,7 +207,6 @@ int transfer_operator_to_B(const char *current_operator, int index_A, char *B,
                            int *previous_sequence_element,
                            int type_of_first_char) {
   int error = FALSE;
-  int element_of_vector = FALSE;
   char operator= * current_operator;
   int input_index_A = index_A;
 
@@ -318,6 +313,7 @@ stack *add_number_output_string(char *A, char *B, int *start_to_write,
           relocate_unary_binary_operators(stack_operation, B, start_to_write);
     }
   }
+
   return stack_operation;
 }
 
