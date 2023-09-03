@@ -27,13 +27,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButton_9, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_point, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_degree, SIGNAL(clicked()), this, SLOT(charEntity()));
+    connect(ui->pushButton_div, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_open_br, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_close_br, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_unary_minus, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_plus, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_sub, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_mult, SIGNAL(clicked()), this, SLOT(charEntity()));
-    connect(ui->pushButton_div, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_x_number, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_ln, SIGNAL(clicked()), this, SLOT(charEntity()));
     connect(ui->pushButton_log, SIGNAL(clicked()), this, SLOT(charEntity()));
@@ -214,7 +214,7 @@ void MainWindow::on_CalcDeposit_clicked()
     current_calc->amount = ui->depositAmount->value();
     current_calc->term = ui->termOfDeposit->value();
     current_calc->interest_capitalization = ui->Capitalisation->isChecked();
-    current_calc->payout_frequency = check_frequence_payout(payout_frequency(ui->PaymentPeriod->currentIndex()));
+    current_calc->payout_frequency = payout_frequency(ui->PaymentPeriod->currentIndex());
     if(ui->checkBoxAddition->isChecked()){
             date = ui->dateEditAdd->date();
             current_calc->add_list = (drop_add_lists*)calloc(UNO, sizeof(drop_add_lists));
@@ -241,13 +241,14 @@ void MainWindow::on_CalcDeposit_clicked()
     endResultmount = QString().asprintf("%0.2f", current_calc->end_term_amount);
     accumulatedInterest = QString().asprintf("%0.2f", current_calc->accumulated_balance_interest);
 
+
     ui->TaxSumm->setText(tax);
     ui->TotalInterestPayments->setText(accumulatedInterest);
     ui->DepositAmountTotal->setText(endResultmount);
+
 
     if(current_calc->add_list) free(current_calc->add_list);
     if(current_calc->drop_list) free(current_calc->drop_list);
     free(current_calc);
   }
 }
-

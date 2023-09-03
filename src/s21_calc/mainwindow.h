@@ -45,9 +45,9 @@ private slots:
     void charEntity();
     void addVectorGraph();
 
+    datum* fillDate();
     void on_CalcCredit_clicked();
     void on_CalcDeposit_clicked();
-    datum* fillDate();
     void on_equalsButton_clicked();
     void on_delButton_clicked();
     void on_ACButton_clicked();
