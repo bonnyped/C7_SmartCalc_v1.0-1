@@ -11,13 +11,13 @@ const int operators[NUMBER_OF_OPERATORS] = {
 
 const int regular_sequence_matrix[NUMBER_OF_OPERATORS][NUMBER_OF_ENTITIES] = {
     /* bin op_br cl_br  func  num*/
-    {FALSE, TRUE, FALSE, TRUE, TRUE},   // BEHIND_BINARY_OPERATOR +
-    {TRUE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_OPEN_BRACKET    +
-    {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_CLOSE_BRACKET   -
-    {FALSE, TRUE, FALSE, FALSE, FALSE}, // BEHIND_FUNCTION        -
-    {TRUE, FALSE, TRUE, FALSE, FALSE},  // BEHIND_NUMBER          -
-    {TRUE, TRUE, FALSE, TRUE, TRUE},    // FIRST_CHAR             +
-    {FALSE, FALSE, TRUE, FALSE, TRUE},  // LAST_CHAR              -
+    {FALSE, TRUE, FALSE, TRUE, TRUE},    // BEHIND_BINARY_OPERATOR +
+    {TRUE, TRUE, FALSE, TRUE, TRUE},     // BEHIND_OPEN_BRACKET    +
+    {TRUE, FALSE, TRUE, FALSE, FALSE},   // BEHIND_CLOSE_BRACKET   -
+    {FALSE, TRUE, FALSE, FALSE, FALSE},  // BEHIND_FUNCTION        -
+    {TRUE, FALSE, TRUE, FALSE, FALSE},   // BEHIND_NUMBER          -
+    {TRUE, TRUE, FALSE, TRUE, TRUE},     // FIRST_CHAR             +
+    {FALSE, FALSE, TRUE, FALSE, TRUE},   // LAST_CHAR              -
 };
 
 int check_spaces_input_string(char *A, int *max_capacity_calloc,
@@ -34,8 +34,7 @@ int check_spaces_input_string(char *A, int *max_capacity_calloc,
   do {
     skip = FALSE;
 
-    if (A[index_A] == ' ')
-      A = delete_whitespaces(A, index_A);
+    if (A[index_A] == ' ') A = delete_whitespaces(A, index_A);
 
     if (isdigit(A[index_A]) || A[index_A] == '.') {
       skip = TRUE;
@@ -73,7 +72,7 @@ int check_spaces_input_string(char *A, int *max_capacity_calloc,
   } while (A[index_A] != '\0' && index_A > 0);
 
   previous_sequence_element = (int *)regular_sequence_matrix[LAST_CHAR];
-  if (previous_sequence_element[current_entity] == FALSE)
+  if (previous_sequence_element[current_entity] == FALSE && index_A >= 0)
     index_A = ERROR_OF_SEQUENCE;
 
   if (index_A <= 0) {
@@ -100,8 +99,7 @@ int add_zero_in_double_type(char *A, int index_A, char *B, int *index_B,
                             int type_of_first_char) {
   int error = 0;
 
-  if (*index_B + UNO >= *capacity)
-    error = realloc_memory(B, capacity);
+  if (*index_B + UNO >= *capacity) error = realloc_memory(B, capacity);
 
   if (!error) {
     B[*index_B] = 48;
@@ -122,8 +120,7 @@ int transfer_number_leksema_to_B(char *A, int index_A, char *B, int *index_B,
   int length = strspn(&A[index_A], numbers);
   int error = FALSE;
 
-  if (*index_B + length >= *capacity)
-    error = realloc_memory(B, capacity);
+  if (*index_B + length >= *capacity) error = realloc_memory(B, capacity);
 
   if (!error) {
     error = check_sequence(current_entity, previous_sequence_element,
@@ -138,8 +135,7 @@ int transfer_number_leksema_to_B(char *A, int index_A, char *B, int *index_B,
     }
   }
 
-  if (error)
-    index_A = error;
+  if (error) index_A = error;
 
   return index_A;
 }
@@ -181,12 +177,11 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
         ? error = check_sequence(current_entity, previous_sequence_element,
                                  type_of_first_char, element_of_vector, FALSE)
         : error;
-    if (!error)
-      result = abbreviation_functions_name(element_of_vector);
+    if (!error) result = abbreviation_functions_name(element_of_vector);
   }
 
   if (!error) {
-    if (*index_B + (int)length >= *capacity)
+    if (*index_B + (int)length + 10 >= *capacity)
       error = realloc_memory(B, capacity);
 
     if (!error) {
@@ -196,8 +191,7 @@ int transfer_alpha_leksema_to_B(char *A, int index_A, char *B, int *index_B,
     }
   }
 
-  if (error)
-    index_A = error;
+  if (error) index_A = error;
 
   return index_A;
 }
@@ -214,18 +208,20 @@ int transfer_operator_to_B(const char *current_operator, int index_A, char *B,
                          type_of_first_char, FALSE, operator);
 
   if (!error) {
-    if (*index_B + UNO >= *capacity)
-      error = realloc_memory(B, capacity);
+    if (*index_B + UNO >= *capacity) error = realloc_memory(B, capacity);
 
     if (!error) {
       B[*index_B] = operator;
       index_A++;
       add_whitspace(index_B, UNO, B);
-      if (input_index_A == FALSE && operator== MINUS)
+      if ((input_index_A == FALSE && (operator== MINUS || operator== PLUS)) ||
+          ((*current_entity == BINURY_OPERATOR ||
+            *current_entity == OPEN_BRACKET) &&
+           (operator== MINUS || operator== PLUS)))
         *current_entity = FIRST_CHAR;
     }
-  } else
-    index_A = error;
+  }
+  error ? index_A = error : index_A;
 
   return index_A;
 }
@@ -254,41 +250,39 @@ int abbreviation_functions_name(int number_of_vectors_element) {
   int result = FALSE;
 
   switch (number_of_vectors_element) {
-  case 0:
-    result = X_N;
-    break;
-  case 1:
-    result = MOD_F;
-    break;
-  case 2:
-    result = COS_F;
-    break;
-  case 3:
-    result = SIN_F;
-    break;
-  case 4:
-    result = TAN_F;
-    break;
-  case 5:
-    result = ACOS_F;
-    break;
-  case 6:
-    result = ASIN_F;
-    break;
-  case 7:
-    result = ATAN_F;
-    break;
-  case 8:
-    result = SQRT_F;
-    break;
-  case 9:
-    result = LN_F;
-    break;
-  case 10:
-    result = LOG_F;
-    break;
-  default:
-    break;
+    case 0:
+      result = X_N;
+      break;
+    case 1:
+      result = MOD_F;
+      break;
+    case 2:
+      result = COS_F;
+      break;
+    case 3:
+      result = SIN_F;
+      break;
+    case 4:
+      result = TAN_F;
+      break;
+    case 5:
+      result = ACOS_F;
+      break;
+    case 6:
+      result = ASIN_F;
+      break;
+    case 7:
+      result = ATAN_F;
+      break;
+    case 8:
+      result = SQRT_F;
+      break;
+    case 9:
+      result = LN_F;
+      break;
+    case 10:
+      result = LOG_F;
+      break;
   }
 
   return result;
@@ -300,8 +294,7 @@ stack *add_number_output_string(char *A, char *B, int *start_to_write,
   int result = FALSE;
   size_t length = FALSE;
 
-  if (A)
-    (*A >= 48 && *A <= 57) || *A == 'x' ? result = TRUE : result;
+  if (A) (*A >= 48 && *A <= 57) || *A == 'x' ? result = TRUE : result;
 
   if (result) {
     length = strlen(A);
@@ -330,8 +323,7 @@ stack *upload_offload_stack(char *A, char *B, stack *stack_operation,
   int current_priority = FALSE;
   int associativity = FALSE;
 
-  if (A)
-    (*A >= 48 && *A <= 57) || *A == 'x' ? result : (result = TRUE);
+  if (A) (*A >= 48 && *A <= 57) || *A == 'x' ? result : (result = TRUE);
 
   if (result) {
     if ((current_priority = check_current_priority(A)) == DEGREE)
@@ -351,12 +343,9 @@ stack *upload_offload_stack(char *A, char *B, stack *stack_operation,
 int check_current_priority(char *A) {
   int priority = 0;
 
-  if ((*A == PLUS || *A == MINUS) || (isalpha(*A) && *A != 'x'))
-    priority = LOW;
-  if (*A == MULT || *A == DIV)
-    priority = MID;
-  if (*A == DEGREE)
-    priority = DEGREE;
+  if ((*A == PLUS || *A == MINUS) || (isalpha(*A) && *A != 'x')) priority = LOW;
+  if (*A == MULT || *A == DIV) priority = MID;
+  if (*A == DEGREE) priority = DEGREE;
 
   return priority;
 }
@@ -416,12 +405,14 @@ stack *check_brackets(char *A, stack *stack_operation, int *number_of_operands,
     stack_operation = push_and_set_operation(stack_operation, MAX, A);
     *number_of_operands = FALSE;
     *skip += TRUE;
+    *error = NO_CLOSE_BRACKET;
   } else if (!(*skip) && *A == CLOSE_BRACKET) {
     while (stack_operation && *(char *)stack_operation->data != OPEN_BRACKET) {
       stack_operation = relocate_operators(B, start_to_write, stack_operation);
     }
     if (stack_operation && *(char *)stack_operation->data == OPEN_BRACKET) {
       stack_operation = s21_pop(stack_operation);
+      *error = NO_ERRORS;
 
       while (stack_operation && *(char *)stack_operation->data == UNARY_MINUS) {
         stack_operation =
@@ -493,7 +484,7 @@ stack *push_and_set_operation(stack *stack_operation, int current_priority,
   stack_operation = s21_push(stack_operation);
   s21_set_priority(stack_operation, current_priority);
   s21_set_associativity(stack_operation, A);
-  s21_set_data(stack_operation, A, sizeof(A));
+  s21_set_data(stack_operation, A, sizeof(A[0]));
 
   return stack_operation;
 }
@@ -502,7 +493,7 @@ stack *upload_function(char *A, stack *stack_operation) {
   stack_operation = s21_push(stack_operation);
   s21_set_priority(stack_operation, FALSE);
   s21_set_associativity(stack_operation, A);
-  s21_set_data(stack_operation, A, sizeof(A));
+  s21_set_data(stack_operation, A, sizeof(A[0]));
 
   return stack_operation;
 }

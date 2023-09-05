@@ -1,0 +1,31 @@
+#include "../s21_smart_calc.h"
+#include <check.h>
+
+#suite credit_suite
+
+#test credit_test_1
+    credit *test_data = calloc(UNO, sizeof(credit));
+    test_data->loan_body = 123456;
+    test_data->term = 33;
+    test_data->interest_rate = 8.7;
+    test_data->type_of_pay = ANNUITETTE;
+    test_data->not_months = FALSE;
+    s21_credit_calc(test_data);
+    ck_assert_double_lt(4219.93 - test_data->monthly_payment_max, s21_epsilon);
+    ck_assert_double_lt(15801.69 - test_data->loan_overpayment, s21_epsilon);
+    ck_assert_double_lt(139257.69 - test_data->total_payment, s21_epsilon);
+    if(test_data) free(test_data);
+
+#test credit_test_2
+    credit *test_data = calloc(UNO, sizeof(credit));
+    test_data->loan_body = 123456;
+    test_data->term = 3;
+    test_data->interest_rate = 8.7;
+    test_data->type_of_pay = DIFFERENTIAL;
+    test_data->not_months = TRUE;
+    s21_credit_calc(test_data);
+    ck_assert_double_lt(3454.2 - test_data->monthly_payment_min, s21_epsilon);
+    ck_assert_double_lt(4324.39 - test_data->monthly_payment_max, s21_epsilon);
+    ck_assert_double_lt(16558.54 - test_data->loan_overpayment, s21_epsilon);
+    ck_assert_double_lt(140014.54 - test_data->total_payment, s21_epsilon);
+    if(test_data) free(test_data);

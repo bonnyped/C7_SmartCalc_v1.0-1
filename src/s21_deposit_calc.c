@@ -16,9 +16,9 @@ static int month_capacity[UNO + MONTHS_IN_YEAR] = {
 //     // printf("\n%d - Index\n", index);
 //     switch (data_schedule[index]->event) {
 //     case EVENT_YEAR:
-//       // printf("\n%d.%d.%d ===       -----END of year",
-//       // data_schedule[index]->date,
-//       //        data_schedule[index]->month, data_schedule[index]->year);
+//       printf("\n%d.%d.%d ===       -----END of year",
+//       data_schedule[index]->date,
+//              data_schedule[index]->month, data_schedule[index]->year);
 //       break;
 //     case EVENT_PAYOUT:
 //       printf("\n%d.%d.%d     ------------------------ PAY",
@@ -37,7 +37,7 @@ static int month_capacity[UNO + MONTHS_IN_YEAR] = {
 //     default:
 //       break;
 //     }
-//     // printf("\n%d     - day", data_schedule[index]->from_christmas_date);
+//     printf("\n%d     - day", data_schedule[index]->from_christmas_date);
 //     printf("\n");
 //     index++;
 //   }
@@ -46,18 +46,21 @@ static int month_capacity[UNO + MONTHS_IN_YEAR] = {
 void s21_deposit_calc(deposit *data) {
   schedule **data_schedule = calloc(MAX_SIZE_DATA_SCHEDULE, sizeof(schedule));
   int counter = FALSE;
+  int count_of_years = UNO;
 
-  fill_end_of_years(data, data_schedule, &counter);
+  fill_end_of_years(data, data_schedule, &counter, &count_of_years);
   fill_payment_events(data, data_schedule, &counter);
 
   if (data->add_list)
-    fill_adds_or_drops(data->start_date, data->term, data_schedule, &counter, data->add_list, EVENT_ADD);
+    fill_adds_or_drops(data->start_date, data->term, data_schedule, &counter,
+                       data->add_list, EVENT_ADD);
 
   if (data->drop_list)
-    fill_adds_or_drops(data->start_date, data->term, data_schedule, &counter, data->drop_list, EVENT_DROP);
+    fill_adds_or_drops(data->start_date, data->term, data_schedule, &counter,
+                       data->drop_list, EVENT_DROP);
 
   insert_sort(data_schedule, counter);
-
+  // function_print(data_schedule, counter, data);
   calculate_deposit(data_schedule, counter, data);
 
   data->amount_add_drops <= s21_epsilon ? data->amount_add_drops = FALSE
@@ -66,12 +69,13 @@ void s21_deposit_calc(deposit *data) {
       ? data->end_term_amount = data->amount
       : (data->accumulated_balance_interest =
              data->end_term_amount - data->amount - data->amount_add_drops);
-  tax_calculate(data);
+  tax_calculate(data, count_of_years);
 
   data_schedule ? free(data_schedule) : data_schedule;
 }
 
-void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter) {
+void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter,
+                       int *count_of_years) {
   int period_start = calculate_days_from_christmas_to_date(data->start_date);
   int period_end = FALSE;
   int days_between_years = FALSE;
@@ -89,6 +93,8 @@ void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter) {
       add_data_to_schedule(datas_buffer, counter, period_end, EVENT_YEAR, FALSE,
                            end_year_date);
       end_year_date->year++;
+      *count_of_years += UNO;
+      period_start = period_end;
     }
     term -= days_between_years;
   }
@@ -137,47 +143,47 @@ void add_data_to_schedule(schedule **datas_buffer, int *counter, int period_end,
   datas_buffer[*counter]->from_christmas_date = period_end;
   datas_buffer[*counter]->event = event;
   datas_buffer[*counter]->amount = amount;
-  if(current_date){
-  datas_buffer[*counter]->date = current_date->date;
-  datas_buffer[*counter]->month = current_date->month;
-  datas_buffer[*counter]->year = current_date->year;
+  if (current_date) {
+    datas_buffer[*counter]->date = current_date->date;
+    datas_buffer[*counter]->month = current_date->month;
+    datas_buffer[*counter]->year = current_date->year;
   }
   *counter += UNO;
 }
 
 void flip_calendar(datum *start_date, int current_frequency, int temp_date) {
   switch (current_frequency) {
-  case PER_DAY:
-    plus_day_period(start_date);
-    break;
-  case PER_WEEK:
-    plus_week_period(start_date);
-    break;
-  case PER_MONTH:
-    plus_month_period(start_date, temp_date);
-    break;
-  case PER_TWO_MONTHS:
-    for (int i = 0; i < 2; i++) {
+    case PER_DAY:
+      plus_day_period(start_date);
+      break;
+    case PER_WEEK:
+      plus_week_period(start_date);
+      break;
+    case PER_MONTH:
       plus_month_period(start_date, temp_date);
-    }
-    break;
-  case PER_QUOTER:
-    for (int i = 0; i < PER_QUOTER; i++) {
-      plus_month_period(start_date, temp_date);
-    }
-    break;
-  case PER_TWO_QUATERS:
-    for (int i = 0; i < PER_TWO_QUATERS; i++) {
-      plus_month_period(start_date, temp_date);
-    }
-    break;
-  case PER_YEAR:
-    for (int i = 0; i < PER_TWO_QUATERS * 2; i++) {
-      plus_month_period(start_date, temp_date);
-    }
-    break;
-  default:
-    break;
+      break;
+    case PER_TWO_MONTHS:
+      for (int i = 0; i < 2; i++) {
+        plus_month_period(start_date, temp_date);
+      }
+      break;
+    case PER_QUOTER:
+      for (int i = 0; i < PER_QUOTER; i++) {
+        plus_month_period(start_date, temp_date);
+      }
+      break;
+    case PER_TWO_QUATERS:
+      for (int i = 0; i < PER_TWO_QUATERS; i++) {
+        plus_month_period(start_date, temp_date);
+      }
+      break;
+    case PER_YEAR:
+      for (int i = 0; i < PER_TWO_QUATERS * 2; i++) {
+        plus_month_period(start_date, temp_date);
+      }
+      break;
+    default:
+      break;
   }
 }
 
@@ -185,30 +191,30 @@ void plus_day_period(datum *start_date) {
   int condition = conditions_check_day(start_date);
 
   switch (condition) {
-  case FEBRUARY_NL:
-    start_date->date = 1;
-    start_date->month++;
-    break;
-  case FEBRUARY_L:
-    start_date->date = 1;
-    start_date->month++;
-    break;
-  case THIRTY_DAY_MONTH:
-    start_date->date = 1;
-    start_date->month++;
-    break;
-  case BEFORE_DECEMBER:
-    start_date->date += PER_DAY - THIRTY_ONE_DAY_MONTH;
-    start_date->month = MONTHS_IN_YEAR - 11;
-    start_date->year += UNO;
-    break;
-  case THIRTY_ONE_DAY_MONTH:
-    start_date->date = 1;
-    start_date->month += 1;
-    break;
-  default:
-    start_date->date++;
-    break;
+    case FEBRUARY_NL:
+      start_date->date = 1;
+      start_date->month++;
+      break;
+    case FEBRUARY_L:
+      start_date->date = 1;
+      start_date->month++;
+      break;
+    case THIRTY_DAY_MONTH:
+      start_date->date = 1;
+      start_date->month++;
+      break;
+    case BEFORE_DECEMBER:
+      start_date->date += PER_DAY - THIRTY_ONE_DAY_MONTH;
+      start_date->month = MONTHS_IN_YEAR - 11;
+      start_date->year += UNO;
+      break;
+    case THIRTY_ONE_DAY_MONTH:
+      start_date->date = 1;
+      start_date->month += 1;
+      break;
+    default:
+      start_date->date++;
+      break;
   }
 }
 
@@ -240,30 +246,30 @@ void plus_week_period(datum *start_date) {
   int condition = conditions_check_week(start_date);
 
   switch (condition) {
-  case MORE_THAN_FABRUARY_NOT_LEAP:
-    start_date->date = start_date->date + PER_WEEK - FEBRUARY_NL;
-    start_date->month++;
-    break;
-  case MORE_THAN_FABRUARY_LEAP:
-    start_date->date = start_date->date + PER_WEEK - FEBRUARY_L;
-    start_date->month++;
-    break;
-  case MORE_THEN_THRTY_DAY_MONTH:
-    start_date->date = start_date->date + PER_WEEK - THIRTY_DAY_MONTH;
-    start_date->month++;
-    break;
-  case MORE_THAN_DECEMBER:
-    start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
-    start_date->month = MONTHS_IN_YEAR - 11;
-    start_date->year++;
-    break;
-  case THIRTY_ONE_DAY_MONTH:
-    start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
-    start_date->month++;
-    break;
-  default:
-    start_date->date = start_date->date + PER_WEEK;
-    break;
+    case MORE_THAN_FABRUARY_NOT_LEAP:
+      start_date->date = start_date->date + PER_WEEK - FEBRUARY_NL;
+      start_date->month++;
+      break;
+    case MORE_THAN_FABRUARY_LEAP:
+      start_date->date = start_date->date + PER_WEEK - FEBRUARY_L;
+      start_date->month++;
+      break;
+    case MORE_THEN_THRTY_DAY_MONTH:
+      start_date->date = start_date->date + PER_WEEK - THIRTY_DAY_MONTH;
+      start_date->month++;
+      break;
+    case MORE_THAN_DECEMBER:
+      start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
+      start_date->month = MONTHS_IN_YEAR - 11;
+      start_date->year++;
+      break;
+    case THIRTY_ONE_DAY_MONTH:
+      start_date->date = start_date->date + PER_WEEK - THIRTY_ONE_DAY_MONTH;
+      start_date->month++;
+      break;
+    default:
+      start_date->date = start_date->date + PER_WEEK;
+      break;
   }
 }
 
@@ -296,31 +302,31 @@ double plus_month_period(datum *start_date, int temp_date) {
   int condition_res = conditions_check_month(start_date, temp_date);
 
   switch (condition_res) {
-  case FEBRUARY_NL:
-    start_date->date = condition_res;
-    start_date->month = start_date->month + UNO;
-    break;
-  case FEBRUARY_L:
-    start_date->date = condition_res;
-    start_date->month = start_date->month + UNO;
-    break;
-  case THIRTY_DAY_MONTH:
-    start_date->date = condition_res;
-    start_date->month = start_date->month + UNO;
-    break;
-  case BEFORE_DECEMBER:
-    start_date->date = temp_date;
-    start_date->month = JANUARY_MONTH;
-    start_date->year++;
-    break;
-  case THIRTY_ONE_DAY_MONTH:
-    start_date->date = temp_date;
-    start_date->month = start_date->month + UNO;
-    break;
-  default:
-    start_date->date = temp_date;
-    start_date->month = start_date->month + UNO;
-    break;
+    case FEBRUARY_NL:
+      start_date->date = condition_res;
+      start_date->month = start_date->month + UNO;
+      break;
+    case FEBRUARY_L:
+      start_date->date = condition_res;
+      start_date->month = start_date->month + UNO;
+      break;
+    case THIRTY_DAY_MONTH:
+      start_date->date = condition_res;
+      start_date->month = start_date->month + UNO;
+      break;
+    case BEFORE_DECEMBER:
+      start_date->date = temp_date;
+      start_date->month = JANUARY_MONTH;
+      start_date->year++;
+      break;
+    case THIRTY_ONE_DAY_MONTH:
+      start_date->date = temp_date;
+      start_date->month = start_date->month + UNO;
+      break;
+    default:
+      start_date->date = temp_date;
+      start_date->month = start_date->month + UNO;
+      break;
   }
 
   return result;
@@ -355,7 +361,8 @@ int conditions_check_month(datum *start_date, int temp_date) {
 }
 
 void fill_adds_or_drops(datum *start, double term, schedule **datas_buffer,
-                        int *counter, drop_add_lists *add_or_drop_list, int event) {
+                        int *counter, drop_add_lists *add_or_drop_list,
+                        int event) {
   int start_date = calculate_days_from_christmas_to_date(start);
   int event_date =
       calculate_days_from_christmas_to_date(add_or_drop_list->date_add_drop);
@@ -434,24 +441,24 @@ void calculate_deposit(schedule **data_schedule, int counter, deposit *data) {
 
   for (int index = 0; index < counter; index++) {
     switch (data_schedule[index]->event) {
-    case EVENT_YEAR:
-      year_calculates(data_schedule, index, &last_event, &day_interest,
-                      &accumulated_period_interest, data);
-      break;
-    case EVENT_ADD:
-      add_drop_calculates(data_schedule, index, &last_event, day_interest, data,
-                          &accumulated_period_interest,
-                          data_schedule[index]->event);
-      break;
-    case EVENT_DROP:
-      add_drop_calculates(data_schedule, index, &last_event, day_interest, data,
-                          &accumulated_period_interest,
-                          data_schedule[index]->event);
-      break;
-    case EVENT_PAYOUT:
-      payout_calculates(data_schedule, index, &last_event, day_interest, data,
-                        &accumulated_period_interest);
-      break;
+      case EVENT_YEAR:
+        year_calculates(data_schedule, index, &last_event, &day_interest,
+                        &accumulated_period_interest, data);
+        break;
+      case EVENT_ADD:
+        add_drop_calculates(data_schedule, index, &last_event, day_interest,
+                            data, &accumulated_period_interest,
+                            data_schedule[index]->event);
+        break;
+      case EVENT_DROP:
+        add_drop_calculates(data_schedule, index, &last_event, day_interest,
+                            data, &accumulated_period_interest,
+                            data_schedule[index]->event);
+        break;
+      case EVENT_PAYOUT:
+        payout_calculates(data_schedule, index, &last_event, day_interest, data,
+                          &accumulated_period_interest);
+        break;
     }
   }
 }
@@ -476,8 +483,12 @@ void add_drop_calculates(schedule **data_schedule, int index, int *last_event,
                          double day_interest, deposit *data,
                          double *accumulated_period_interest, int event_type) {
   int period_capacity = data_schedule[index]->from_christmas_date - *last_event;
-  double event_amount = event_type == EVENT_DROP ? data->drop_list->amount *= -1
-                                                 : data->add_list->amount;
+  double event_amount = FALSE;
+
+  event_type == EVENT_DROP ? event_amount = data->drop_list->amount
+                           : (event_amount = data->add_list->amount);
+
+  event_type == EVENT_DROP ? event_amount *= -1 : event_amount;
 
   *accumulated_period_interest +=
       data->end_term_amount * day_interest * period_capacity;
@@ -504,77 +515,76 @@ void payout_calculates(schedule **data_schedule, int index, int *last_event,
   data_schedule[index] ? free(data_schedule[index]) : data_schedule[index];
 }
 
-void tax_calculate(deposit *data) {
+void tax_calculate(deposit *data, int count_of_years) {
   double tax_result = FALSE;
 
-  tax_result = NONTAXABLE_BASE / 100 * data->tax_rate;
+  tax_result = NONTAXABLE_BASE / 100 * data->tax_rate * count_of_years;
   tax_result -= data->accumulated_balance_interest;
 
-  tax_result <= s21_epsilon *NONTAXABLE_BASE
-      ? data->tax_amount = tax_result * (-1)
-      : (data->tax_amount = FALSE);
+  tax_result <= s21_epsilon *NONTAXABLE_BASE ? tax_result *= (-1)
+                                             : (tax_result = FALSE);
+  tax_result *= 0.13;
+  data->tax_amount = tax_result;
 }
 
-int check_frequence_add_drop(int index){
+int check_frequence_add_drop(int index) {
   int result = -1;
 
-  switch (index)
-  {
-  case 0:
-    result = PER_ONCE;
-    break;
-  case 1:
-    result = PER_MONTH;
-    break;
-  case 2:
-    result = PER_TWO_MONTHS;
-    break;
-  case 3:
-    result = PER_QUOTER;
-    break;
-  case 4:
-    result = PER_TWO_QUATERS;
-    break;
-  case 5:
-    result = PER_YEAR;
-    break;
+  switch (index) {
+    case 0:
+      result = PER_ONCE;
+      break;
+    case 1:
+      result = PER_MONTH;
+      break;
+    case 2:
+      result = PER_TWO_MONTHS;
+      break;
+    case 3:
+      result = PER_QUOTER;
+      break;
+    case 4:
+      result = PER_TWO_QUATERS;
+      break;
+    case 5:
+      result = PER_YEAR;
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return result;
 }
 
-int check_frequence_payout(int index){
+int check_frequence_payout(int index) {
   int result = FALSE;
 
-  switch (index)
-  {
-  case 0:
-    result = PER_DAY;
-    break;
-  case 1:
-    result = PER_WEEK;
-    break;
-  case 2:
-    result = PER_MONTH;
-    break;
-  case 3:
-    result = PER_QUOTER;
-    break;
-  case 4:
-    result = PER_TWO_QUATERS;
-    break;
-  case 5:
-    result = PER_YEAR;
-    break;
-  case 6:
-    RESULT = AT_THE_END_OF_TERM;
-    break;
+  switch (index) {
+    case 0:
+      result = PER_DAY;
+      break;
+    case 1:
+      result = PER_WEEK;
+      break;
+    case 2:
+      result = PER_MONTH;
+      break;
+    case 3:
+      result = PER_QUOTER;
+      break;
+    case 4:
+      result = PER_TWO_QUATERS;
+      break;
+    case 5:
+      result = PER_YEAR;
+      break;
+    case 6:
+      result = AT_THE_END_OF_TERM;
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return result;

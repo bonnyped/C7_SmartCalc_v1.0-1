@@ -1,0 +1,258 @@
+#include "../s21_smart_calc.h"
+#include <check.h>
+
+#suite deposit_suite
+
+#test deposit_test_1
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = FALSE;
+    result_dep->payout_frequency = PER_YEAR;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(1915068.49 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(10000000 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+#test deposit_test_2
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_YEAR;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(2006567.76 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(12006567.76 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+#test deposit_test_3
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+//   add list
+  result_dep->add_list = calloc(UNO, sizeof(drop_add_lists));
+  result_dep->add_list->date_add_drop = calloc(UNO,
+  sizeof(drop_add_lists)); result_dep->add_list->date_add_drop->date = 16;
+  result_dep->add_list->date_add_drop->month = 03;
+  result_dep->add_list->date_add_drop->year = 2024;
+  result_dep->add_list->amount = 1000000;
+  result_dep->add_list->frequency = PER_ONCE;
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_YEAR;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(2149276.99 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(13149276.99 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+  #test deposit_test_4
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+
+  result_dep->drop_list = calloc(UNO, sizeof(drop_add_lists));
+  result_dep->drop_list->date_add_drop = calloc(UNO,
+  sizeof(drop_add_lists)); result_dep->drop_list->date_add_drop->date = 04;
+  result_dep->drop_list->date_add_drop->month = 05;
+  result_dep->drop_list->date_add_drop->year = 2024;
+  result_dep->drop_list->amount = 50000;
+  result_dep->drop_list->frequency = PER_MONTH;
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_YEAR;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(890267.56 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(10890267.56 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->drop_list) {
+      if (result_dep->drop_list->date_add_drop)
+        free(result_dep->drop_list->date_add_drop);
+      free(result_dep->drop_list);
+    }
+    free(result_dep);
+  }
+
+#test deposit_test_5
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_DAY;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(2110414 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(12110414 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+#test deposit_test_6
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_WEEK;
+    result_dep->start_date->date = 04;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(2108513.49 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(12108513.49 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+#test deposit_test_7
+  deposit *result_dep = NULL;
+
+  if ((result_dep = calloc(UNO, sizeof(deposit)))) {
+    result_dep->start_date = calloc(UNO, sizeof(datum));
+
+    result_dep->amount = 10000000;
+    result_dep->interest_rate = 10;
+    result_dep->term = 700;
+    result_dep->tax_rate = 12;
+    result_dep->interest_capitalization = TRUE;
+    result_dep->payout_frequency = PER_MONTH;
+    result_dep->start_date->date = 30;
+    result_dep->start_date->month = 9;
+    result_dep->start_date->year = 2023;
+  }
+
+  s21_deposit_calc(result_dep);
+
+  ck_assert_double_lt(2101129.34 - result_dep->accumulated_balance_interest, s21_epsilon);
+  ck_assert_double_lt(12101129.34 - result_dep->end_term_amount, s21_epsilon);
+  
+  if (result_dep) {
+    if (result_dep->start_date) 
+      free(result_dep->start_date);
+    if (result_dep->add_list) {
+      if (result_dep->add_list->date_add_drop)
+        free(result_dep->add_list->date_add_drop);
+      free(result_dep->add_list);
+    }
+    free(result_dep);
+  }
+
+  #test deposit_test_8
+    int test = 8;
+
+    for(int i = 0; i < test; i++){
+      check_frequence_add_drop(i);
+      check_frequence_payout(i);
+    }

@@ -1,0 +1,104 @@
+#include "../s21_smart_calc.h"
+
+#suite check_spaces_input_string
+
+#test check_spaces_1
+    char *test_str = "----(-----3)";
+    int error = FALSE;
+
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+    
+    ck_assert_int_eq(error, NO_ERRORS);
+
+#test check_spaces_2
+    char *test_str = "Sin(x) + 10";
+    int error = FALSE;
+
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_ERRORS);
+
+#test check_spaces_3
+    char *test_str = "    .0987 +76     * 11 ^2 ^3 ^4       ";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_ERRORS);
+
+#test check_spaces_4
+    char *test_str = "cos(x) - asin(x-11)";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_ERRORS);
+
+#test check_spaces_5
+    char *test_str = "x-11)";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_OPEN_BRACKET);
+    
+#test check_spaces_6
+    char *test_str = "(x-11";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_CLOSE_BRACKET);
+
+#test check_spaces_7
+    char *test_str = "(HELLO-11)";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+
+    ck_assert_int_eq(error, NOT_MATCHED_ALPHA_LEKSEMA);
+    
+#test check_spaces_8
+    char *test_str = "15 Mod 3 + Acos(5) - Tan(1) - atan(x) * sqrt(16) - ln(1)+LOG(17)";
+    int error = FALSE;
+    
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_ERRORS);
+
+#test check_spaces_9
+    char *test_str = "15 Mod 3 + Acos(5) - Tan(1) - atan(x) * sqrt(16) - ln(1)+LOG(17)+15 Mod 3 + Acos(5) - Tan(1) - atan(x) * sqrt(16) - ln(1)+LOG(17)+15 Mod 3 + Acos(5) - Tan(1) - atan(x) * sqrt(16) - ln(1)+LOG(17)+15 Mod 3 + Acos(5) - Tan(1) - atan(x) * sqrt(16) - ln(1)+1523";
+
+    int error = FALSE;
+
+#test check_spaces_10
+    char *test_str = "(x-11)*3*";
+    int error = FALSE;
+
+    char *for_free = string_conversion(test_str, &error);
+
+    ck_assert_int_eq(error, ERROR_OF_SEQUENCE);
+
+#test check_spaces_11
+    char *test_str = "(x*sincos11)";
+    int error = FALSE;
+
+    char *for_free = string_conversion(test_str, &error);
+
+    ck_assert_int_eq(error, ERROR_OF_SEQUENCE);
+
+#test check_spaces_12
+    char *test_str = "+++1-11*3";
+    int error = FALSE;
+
+    char *for_free = string_conversion(test_str, &error);
+    if(for_free) free(for_free);
+
+    ck_assert_int_eq(error, NO_ERRORS);

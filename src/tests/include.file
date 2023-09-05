@@ -1,1 +1,4 @@
 #include "../s21_smart_calc.h"
+#include <check.h>
+
+#define std_size 255

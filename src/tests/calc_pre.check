@@ -1,0 +1,29 @@
+#include "../s21_smart_calc.h"
+#suite calc_pre.check
+
+#test pre_1
+    char *for_free = calloc(std_size, sizeof(char));
+    for_free = memcpy(for_free, "9 l 8 g + x s 0.7 i 0.3 c ^ / 0.6 a * - 7 t m 0.8 1 ^ n 20 q ^ * ", std_size);
+    double result = FALSE;
+    double x_number = 0.4;
+    double correct_result = 0.00439429604472077;
+    
+    result = calc_polish_reverse_entry(for_free, x_number);
+
+    ck_assert_double_lt(correct_result - result, s21_epsilon);
+
+    if(for_free) free(for_free);
+    
+#test pre_2
+    char *test_str = "5 5 ~ * ";
+    char *for_free = calloc(std_size, sizeof(char));
+    double x_number = 0.4;
+    double correct_result = -25;
+    
+    memcpy(for_free, test_str, std_size);
+    double result = calc_polish_reverse_entry(for_free, x_number);
+
+    ck_assert_double_lt(correct_result - result, s21_epsilon);
+
+    if(for_free) free(for_free);
+

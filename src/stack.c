@@ -15,8 +15,7 @@ stack *s21_pop(stack *last_el) {
   stack *result = NULL;
 
   if (last_el) {
-    if (last_el->data)
-      free(last_el->data);
+    if (last_el->data) free(last_el->data);
     result = last_el->next_element_stack;
     free(last_el);
   }
@@ -31,9 +30,8 @@ void s21_free_stack(stack *next_el) {
 }
 
 void s21_set_data(stack *next_el, void *data, unsigned int size) {
-  if (next_el->data)
-    free(next_el->data);
-  next_el->data = malloc(size);
+  if (next_el->data) free(next_el->data);
+  next_el->data = malloc(size * sizeof(data));
   memcpy(next_el->data, data, size);
 }
 

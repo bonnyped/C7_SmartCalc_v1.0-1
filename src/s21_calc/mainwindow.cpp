@@ -237,16 +237,18 @@ void MainWindow::on_CalcDeposit_clicked()
 
     s21_deposit_calc(current_calc);
 
-    tax = QString().asprintf("%0.2f", current_calc->tax_amount);
-    endResultmount = QString().asprintf("%0.2f", current_calc->end_term_amount);
-    accumulatedInterest = QString().asprintf("%0.2f", current_calc->accumulated_balance_interest);
+    taxAmount = QString().asprintf("%0.2lf", current_calc->tax_amount);
+    accumulatedInterest = QString().asprintf("%0.2lf", current_calc->accumulated_balance_interest);
+    endTermAmount = QString().asprintf("%0.2lf", current_calc->end_term_amount);
 
-    ui->TaxSumm->setText(tax);
+    ui->TaxSumm->setText(taxAmount);
     ui->TotalInterestPayments->setText(accumulatedInterest);
-    ui->DepositAmountTotal->setText(endResultmount);
+    ui->DepositAmountTotal->setText(endTermAmount);
 
-    if(current_calc->add_list) free(current_calc->add_list);
-    if(current_calc->drop_list) free(current_calc->drop_list);
+    if(current_calc->add_list)
+      free(current_calc->add_list);
+    if(current_calc->drop_list) 
+      free(current_calc->drop_list);
     free(current_calc);
   }
 }

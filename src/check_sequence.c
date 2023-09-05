@@ -3,7 +3,7 @@
 int check_sequence(int *current_entity, int *previous_sequence_element,
                    int type_of_first_char, int element_of_vector,
                    int operator) {
-  int error = ERROR_OF_SEQUENCE;
+  int error = FALSE;
   int entity_is_X = 0;
   int entity_is_operation_MOD = 1;
 
@@ -28,11 +28,9 @@ int check_sequence(int *current_entity, int *previous_sequence_element,
       *current_entity = BINURY_OPERATOR;
   }
 
-  if (previous_sequence_element[*current_entity] == TRUE) {
-    error = FALSE;
-  } else {
-    perror("\n\nошибка последовательности\n\n");
-  }
+  previous_sequence_element[*current_entity] == FALSE
+      ? error = ERROR_OF_SEQUENCE
+      : error;
 
   return error;
 }

@@ -33,7 +33,7 @@ public:
 private:
     Ui::MainWindow *ui;
     double xBegin, xEnd, h, fillerX, maxBorderX, minBorderX, maxBorderY, minBorderY, result;
-    QString tax, endResultmount, accumulatedInterest;
+    QString taxAmount, endTermAmount, accumulatedInterest;
     int N;
     char *PRE;
     QVector <double> x, y;
@@ -42,12 +42,11 @@ protected:
     void keyPressEvent(QKeyEvent *e) override;
 
 private slots:
+    datum* fillDate();
     void charEntity();
     void addVectorGraph();
-
     void on_CalcCredit_clicked();
     void on_CalcDeposit_clicked();
-    datum* fillDate();
     void on_equalsButton_clicked();
     void on_delButton_clicked();
     void on_ACButton_clicked();

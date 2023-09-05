@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-#define MAX_CAPACITY 4096
+#define MAX_CAPACITY 255
 #define CAPACITY_OF_NAME_ERRORS 25
 #define NUMBER_OF_FUNCTIONS_PLUS_X 11
 #define MAX_CAPACITY_OF_NAME_FUNCTION 6
@@ -35,11 +35,11 @@ typedef struct credit {
   double term;
   double interest_rate;
   int type_of_pay;
+  int not_months;
   double monthly_payment_max;
   double monthly_payment_min;
   double loan_overpayment;
   double total_payment;
-  int not_months;
 } credit;
 
 typedef struct datum {
@@ -79,9 +79,6 @@ typedef struct schedule {
   int month;
   int year;
   double day_interest;
-  //   double balance;
-  //   double cap_balance;
-  //   double interest_balance;
 } schedule;
 
 enum types_of_first_chars {
@@ -92,12 +89,13 @@ enum types_of_first_chars {
 };
 
 enum input_errors {
-  NO_OPEN_BRACKET = -5,
+  NO_CLOSE_BRACKET = -6,
+  NO_OPEN_BRACKET,
   MORE_THEN_ONE_POINT,
   ERROR_OF_SEQUENCE,
   NOT_REALLOCED,
   NOT_MATCHED_ALPHA_LEKSEMA,
-  EMPTY_STRING, // value == 0 must have
+  NO_ERRORS,  // value == 0 must have
 };
 
 enum type_definition {
@@ -345,10 +343,12 @@ void calc_whole_payments_differential(credit *current_calculation,
 
 /* deposit_calc_functions */
 void s21_deposit_calc(deposit *data);
-void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter);
+void fill_end_of_years(deposit *data, schedule **datas_buffer, int *counter,
+                       int *count_of_years);
 void fill_payment_events(deposit *data, schedule **datas_buffer, int *counter);
 void fill_adds_or_drops(datum *start, double term, schedule **datas_buffer,
-                        int *counter, drop_add_lists *add_or_drop_list, int event);
+                        int *counter, drop_add_lists *add_or_drop_list,
+                        int event);
 void plus_day_period(datum *start_date);
 int conditions_check_day(datum *start_date);
 void plus_week_period(datum *start_date);
@@ -371,9 +371,9 @@ void add_drop_calculates(schedule **data_schedule, int index, int *last_event,
 void payout_calculates(schedule **data_schedule, int index, int *last_event,
                        double day_interest, deposit *data,
                        double *accumulated_period_interest);
-void tax_calculate(deposit *data);
+void tax_calculate(deposit *data, int count_of_years);
 int check_frequence_add_drop(int index);
 int check_frequence_payout(int index);
 /* deposit_calc_functions */
 
-#endif // S21_SMART_CALC_H
+#endif  // S21_SMART_CALC_H

@@ -2,20 +2,20 @@
 
 void s21_credit_calc(credit *current_calculation) {
   current_calculation->not_months
-      ? current_calculation->term = current_calculation->term / MONTHS_IN_YEAR
+      ? current_calculation->term = current_calculation->term * MONTHS_IN_YEAR
       : current_calculation->term;
 
   switch (current_calculation->type_of_pay) {
-  case ANNUITETTE:
-    calc_whole_payments_annuitette(
-        current_calculation, current_calculation->loan_body,
-        current_calculation->term, current_calculation->interest_rate);
-    break;
-  case DIFFERENTIAL:
-    calc_whole_payments_differential(
-        current_calculation, current_calculation->loan_body,
-        current_calculation->term, current_calculation->interest_rate);
-    break;
+    case ANNUITETTE:
+      calc_whole_payments_annuitette(
+          current_calculation, current_calculation->loan_body,
+          current_calculation->term, current_calculation->interest_rate);
+      break;
+    case DIFFERENTIAL:
+      calc_whole_payments_differential(
+          current_calculation, current_calculation->loan_body,
+          current_calculation->term, current_calculation->interest_rate);
+      break;
   };
 }
 
@@ -58,19 +58,20 @@ void calc_whole_payments_differential(credit *current_calculation,
   current_calculation->total_payment = loan_body;
   double month_overpayment = FALSE;
 
-  monthly_payment_to_loan_body = floor_pyament(monthly_payment_to_loan_body);
-
   for (int i = FALSE; i < (int)term; i++) {
     month_overpayment = loan_body * (interest_rate / 100.00) / MONTHS_IN_YEAR;
-    month_overpayment = floor_pyament(month_overpayment);
     current_calculation->loan_overpayment += month_overpayment;
     loan_body -= monthly_payment_to_loan_body;
     if (!i)
       current_calculation->monthly_payment_max =
-          monthly_payment_to_loan_body + month_overpayment;
+          floor_pyament(monthly_payment_to_loan_body + month_overpayment);
     if (i == (int)term - UNO)
       current_calculation->monthly_payment_min =
-          monthly_payment_to_loan_body + month_overpayment;
+          floor_pyament(monthly_payment_to_loan_body + month_overpayment);
   }
   current_calculation->total_payment += current_calculation->loan_overpayment;
+  current_calculation->total_payment =
+      floor_pyament(current_calculation->total_payment);
+  current_calculation->loan_overpayment =
+      floor_pyament(current_calculation->loan_overpayment);
 }

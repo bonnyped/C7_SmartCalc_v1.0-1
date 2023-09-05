@@ -62,7 +62,7 @@ background-color: rgb(215, 215, 215);
      <enum>Qt::TabFocus</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="SmartCalc">
      <property name="font">
@@ -1921,6 +1921,33 @@ QPushButton:pressed {
       <property name="buttonSymbols">
        <enum>QAbstractSpinBox::NoButtons</enum>
       </property>
+      <property name="maximumDate">
+       <date>
+        <year>2101</year>
+        <month>1</month>
+        <day>1</day>
+       </date>
+      </property>
+      <property name="minimumDate">
+       <date>
+        <year>2000</year>
+        <month>1</month>
+        <day>1</day>
+       </date>
+      </property>
+      <property name="calendarPopup">
+       <bool>true</bool>
+      </property>
+      <property name="timeSpec">
+       <enum>Qt::LocalTime</enum>
+      </property>
+      <property name="date">
+       <date>
+        <year>2023</year>
+        <month>9</month>
+        <day>4</day>
+       </date>
+      </property>
      </widget>
      <widget class="QDoubleSpinBox" name="KeyRate">
       <property name="geometry">
@@ -2338,6 +2365,39 @@ QPushButton:pressed {
       <property name="buttonSymbols">
        <enum>QAbstractSpinBox::NoButtons</enum>
       </property>
+      <property name="maximumDateTime">
+       <datetime>
+        <hour>23</hour>
+        <minute>59</minute>
+        <second>59</second>
+        <year>2100</year>
+        <month>12</month>
+        <day>31</day>
+       </datetime>
+      </property>
+      <property name="minimumDateTime">
+       <datetime>
+        <hour>16</hour>
+        <minute>47</minute>
+        <second>0</second>
+        <year>2000</year>
+        <month>1</month>
+        <day>1</day>
+       </datetime>
+      </property>
+      <property name="calendarPopup">
+       <bool>true</bool>
+      </property>
+      <property name="timeSpec">
+       <enum>Qt::LocalTime</enum>
+      </property>
+      <property name="date">
+       <date>
+        <year>2023</year>
+        <month>9</month>
+        <day>4</day>
+       </date>
+      </property>
      </widget>
      <widget class="QDateEdit" name="dateEditTakeDown">
       <property name="geometry">
@@ -2361,6 +2421,33 @@ QPushButton:pressed {
       </property>
       <property name="buttonSymbols">
        <enum>QAbstractSpinBox::NoButtons</enum>
+      </property>
+      <property name="maximumDate">
+       <date>
+        <year>2101</year>
+        <month>1</month>
+        <day>1</day>
+       </date>
+      </property>
+      <property name="minimumDate">
+       <date>
+        <year>2000</year>
+        <month>1</month>
+        <day>1</day>
+       </date>
+      </property>
+      <property name="calendarPopup">
+       <bool>true</bool>
+      </property>
+      <property name="timeSpec">
+       <enum>Qt::LocalTime</enum>
+      </property>
+      <property name="date">
+       <date>
+        <year>2023</year>
+        <month>9</month>
+        <day>4</day>
+       </date>
       </property>
      </widget>
      <widget class="QComboBox" name="additionPeriod">
